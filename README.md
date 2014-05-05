@@ -1,4 +1,4 @@
-anrem
+Automated Non REcursive Make
 =====
 
 
