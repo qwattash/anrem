@@ -21,3 +21,6 @@ ANREM_BUILD_CLEAN :=
 
 #same as BUILD_CLEAN but for debug stuff
 DEBUG_CLEAN :=
+
+# null variable useful for calling functions with null args
+NULL :=

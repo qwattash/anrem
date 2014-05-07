@@ -39,9 +39,15 @@ include $(ANREM_COMPONENTS)/functions.mk
 include $(ANREM_TOP)/project.mk
 
 #
+# export MOD_x variables that
+# relate a module name with its path
+#
+$(call anrem-export-modules,$(ANREM_MODULES))
+
+#
 # include project modules
 #
-$(call anrem-include-modules, $(ANREM_MODULES))
+$(call anrem-include-modules,$(ANREM_MODULES))
 
 #
 # include ANREM specific targets

@@ -6,16 +6,14 @@
 #
 
 #architecture
-ARCH := i386
+ARCH := 
 
 #toolchain
 CC := gcc
 LD := ld
 
 #toolchain options
-CFLAGS := -Wall -Wno-implicit-function-declaration -g -m32 -nostdlib -nodefaultlibs -nostartfiles -fno-builtin
+CFLAGS := 
 ASMFLAGS := 
-LDFLAGS := -m elf_i386
+LDFLAGS :=
 LDASMFLAGS := 
-DDBLOCKSIZE := 512
-VBOXMINSIZE := 1048576
