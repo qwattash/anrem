@@ -8,18 +8,6 @@
 # purposes
 CURRENT := $(call anrem-current-path)
 
-# this exports the module path into a global var $MOD_<name_of_module>
-# the <name_of_module> can be specified optionally (in this case it is set to main
-# as it would have been set automatically)
-# So the current module path will be accessible from other modules as $MOD_main
-# be aware that this variable should be used only in targets and not outside since
-# the variable may not yet be defined because the relevant module.mk has not yet
-# been parsed.
-# If you wish to have a particular MOD_x variable defined, you can define it
-# manually from the main project.mk, however you are in charge of keeping it
-# up to date!
-#$(call anrem-export-module, main)
-
 # these are local variables defined with the help of the auto-inclusion system CURRENT path
 # local variables are notationally expensive as you can see below, so use them only if it
 # is really necessary
