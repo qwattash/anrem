@@ -24,3 +24,6 @@ DEBUG_CLEAN :=
 
 # null variable useful for calling functions with null args
 NULL :=
+
+# space variable useful in some cases
+SPACE := $(NULL) $(NULL)

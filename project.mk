@@ -17,10 +17,8 @@ BUILDDIR := test_src/build
 # To fix this the user is given the opportunity (and is strongly encouraged)
 # to define himself the variables for conflicting modules in the project.mk
 # as follows.
-#$(call anrem-def-modx, test_src/calc/main, cmain)
-#$(call anrem-def-modx, test_src/main, main)
+$(call anrem-def-modx, test_src/calc/main, custom)
 
-MOD_VAR_NAMES := $(NULL)
 # comments can not be done inside the define so deal with it!
 # First of all check whether the path has already been seen by the export function, if not go on, else NOP
 # Secondly get the name of the module into a variable used locally
@@ -28,10 +26,10 @@ MOD_VAR_NAMES := $(NULL)
 # if the name is found, this is a problem! Notify the user with a warning and rename both modules' MOD_x var
 # by appending the 
 # else everything ok, export the MOD_x var as normal
-
 define anrem-def-modx-dbg1 =
-$(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
-$(if $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
+$(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),$(NULL),$1)))\
+$(info $(anrem-def-modx-name))\
+$(if $(and $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),$(filter $1,$(MOD_$(anrem-def-modx-name)))),\
 	$(eval anrem-def-modx-duplicate := $(MOD_$(anrem-def-modx-name)))\
 	$(warning found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
 	 	Consider assigning MOD variable manually)\
@@ -49,11 +47,22 @@ $(if $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
 )
 endef
 
-$(call anrem-def-modx-dbg1, a/b/cc/dd)
-$(info -$(EXPORTED_MODULES)-)
-$(info -$(MOD_dd)-)
-$(call anrem-def-modx-dbg1, a/b/xx/dd)
-$(info -$(EXPORTED_MODULES)-)
-$(info -$(MOD_dd)-)
-$(info -$(MOD_a_b_xx_dd)-)
-$(info -$(MOD_a_b_cc_dd)-)
+#$(call anrem-def-modx-dbg1, a/b/cc/dd)
+#$(info -$(MOD_VAR_NAMES)-)
+#$(info -$(MOD_dd)-)
+#$(call anrem-def-modx-dbg1, a/b/xx/dd)
+#$(info -$(MOD_VAR_NAMES)-)
+#$(info -$(MOD_dd)-)
+#$(info -$(MOD_a_b_xx_dd)-)
+#$(info -$(MOD_a_b_cc_dd)-)
+#$(call anrem-def-modx-dbg1, a/b/xx/asd)
+#$(info -$(MOD_VAR_NAMES)-)
+#$(info -$(MOD_asd)-)
+#$(call anrem-def-modx-dbg1, a/b/cc/asd, custom)
+#$(info -$(MOD_VAR_NAMES)-)
+#$(info -$(MOD_custom)-)
+#$(call anrem-def-modx-dbg1, a/b/xx/kk)
+#$(info -$(MOD_VAR_NAMES)-)
+#$(info -$(MOD_kk)-)
+
+#$(error debug-stop)

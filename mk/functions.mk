@@ -8,7 +8,7 @@
 # substitutes optional argument with given default if no argumen is given
 # @param $1 optarg content
 # @param $2 default
-anrem-optarg = $(subst $(NULL),$(2),$(1))
+anrem-optarg = $(if $(1),$(1),$(2))
 
 ##################################### modules handling
 
@@ -50,7 +50,7 @@ MOD_VAR_NAMES := $(NULL)
 
 define anrem-def-modx =
 $(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
-$(if $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
+$(if $(and $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),$(filter $1,$(MOD_$(anrem-def-modx-name)))),\
 	$(eval anrem-def-modx-duplicate := $(MOD_$(anrem-def-modx-name)))\
 	$(warning found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
 	 	Consider assigning MOD variable manually)\

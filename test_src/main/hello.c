@@ -17,10 +17,12 @@
  * so you may use here "bla/calc.h" and tell anrem to strip the bla part from the -I option
  */
 #include "calc.h"
+#include "calcmain.h"
 
 int main(int argc, char* argv[])
 {
+  int x = prompt("gimme a number");
   printf("%s\n", "hello, world");
-  printf("2 + 2 = %d\n", add(0, 2));
+  printf("%d + 2 = %d\n", x, add(x, 2));
   return 0;
 }

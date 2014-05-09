@@ -22,8 +22,14 @@ BUILD_TARGETS_$(CURRENT) := $(addprefix $(BUILDDIR)/,hello)
 # So the the current module path will be accessible from other modules as $MOD_main.
 # The only drawback in this is that the naming is automatic and if you name two modules with
 # the same name you may end up with an error.
-# To avoid this [... into the infinity of thoughts ...]
-CALC_obj_$(CURRENT) := $(MOD_calc)/calc.o
+# To avoid this you get the possibility to define a MOD var for any module path so that you
+# can have meaningful names while avoiding collisions. This should not be a very frequent
+# problem though!
+# The default behaviour is progressively use parts of the module path in the MOD_<name> variable
+# <name> part until no conflict occur, however this makes the name dependant on the path, so
+# pay attention to that, if you do not want troubles just put a custom name (as done below for
+# MOD_custom for test_src/calc/main) in project.mk
+CALC_obj_$(CURRENT) := $(MOD_calc)/calc.o $(MOD_custom)/calcmain.o
 
 # for example the required files are defined as non-local
 HELLO_deps = $(addprefix $(CURRENT)/,hello.c)
@@ -40,7 +46,7 @@ $(call anrem-target, $(BUILD_TARGETS_$(CURRENT)) ): $(HELLO_obj) $(CALC_obj_$(CU
 $(call anrem-target, $(HELLO_obj)): $(HELLO_deps)
 # note that hello.c includes calc.h which is in another module
 # the problem is solved by using the $MOD_calc as a possible include dir
-	$(CC) -c -I $(MOD_calc) -o $@ $^
+	$(CC) -c -I $(MOD_calc) -I $(MOD_custom) -o $@ $^
 
 $(call anrem-target, hello_clean):
 	rm -f $(path)/*.o
