@@ -38,45 +38,66 @@ anrem-current-path = $(ANREM_CURRENT_MODULE)
 # @param $2 optional name of the module to use
 #
 
-# the variable might be moved somewhere else?
-MOD_VAR_NAMES := $(NULL)
 # comments can not be done inside the define so deal with it!
-# First of all check whether the path has already been seen by the export function, if not go on, else NOP
+# Instead I'll give pseudocode, you're welcome..
+# void anrem-def-modx(path, [custom_name=NULL]):
+# if (not path in EXPORTED_MODULES):
+# 	// if no custom name is given, use the module directory name
+# 	// otherwise use the given custom name
+#	if (custom_name == NULL):
+#		words = split('/', path)
+#		name = words.last()
+# 	else:
+# 		name = custom_name
+#	// module not yet exported, try to create MOD variable
+# 	if (name in MOD_VAR_NAMES):
+#		//conflicting module
+#		rename old conflicting module MOD var to a longer name
+#		use longer name to create MOD var for the current module
+#		set the value for the new module var
+#		add new module var name to MOD_VAR_NAMES
+#		add path to EXPORTED_MODULES
+#	else:
+#		// new module, create MOD variable normally
+#		create MOD var using just the module name
+#		add new module var name to MOD_VAR_NAMES
+#		add path to EXPORTED_MODULES
+# 
 # Secondly get the name of the module into a variable used locally
 # Then check again for the name of the module inside the exported paths
 # if the name is found, this is a problem! Notify the user with a warning and rename both modules' MOD_x var
 # by appending the 
 # else everything ok, export the MOD_x var as normal
-
 define anrem-def-modx =
-$(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
-$(if $(and $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),$(filter $1,$(MOD_$(anrem-def-modx-name)))),\
-	$(eval anrem-def-modx-duplicate := $(MOD_$(anrem-def-modx-name)))\
-	$(warning found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
-	 	Consider assigning MOD variable manually)\
-	$(eval undefine MOD_$(anrem-def-modx-name))\
-	$(eval MOD_VAR_NAMES := $(filter-out $(anrem-def-modx-name),$(MOD_VAR_NAMES)))\
-	$(eval anrem-def-modx-duplicate-name := $(subst /,_,$(anrem-def-modx-duplicate)))\
-	$(eval anrem-def-modx-name := $(subst /,_,$1))\
+$(if $(filter $1,$(EXPORTED_MODULES)),,\
+	$(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
+	$(if $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
+		$(eval EXPORTED_MODULES += $1)\
+		$(eval anrem-def-modx-duplicate := $(MOD_$(anrem-def-modx-name)))\
+		$(warning found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
+	 		Consider assigning MOD variable manually)\
+		$(eval undefine MOD_$(anrem-def-modx-name))\
+		$(eval MOD_VAR_NAMES := $(filter-out $(anrem-def-modx-name),$(MOD_VAR_NAMES)))\
+		$(eval anrem-def-modx-duplicate-name := $(subst /,_,$(anrem-def-modx-duplicate)))\
+		$(eval anrem-def-modx-name := $(subst /,_,$1))\
+		$(eval MOD_$(anrem-def-modx-name) := $1)\
+		$(eval MOD_$(anrem-def-modx-duplicate-name) := $(anrem-def-modx-duplicate))\
+		$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
+		$(eval MOD_VAR_NAMES += $(anrem-def-modx-duplicate-name))\
+	,\
+	$(eval EXPORTED_MODULES += $1)\
 	$(eval MOD_$(anrem-def-modx-name) := $1)\
-	$(eval MOD_$(anrem-def-modx-duplicate-name) := $(anrem-def-modx-duplicate))\
 	$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
-	$(eval MOD_VAR_NAMES += $(anrem-def-modx-duplicate-name))\
-,\
-	$(eval MOD_$(anrem-def-modx-name) := $1)\
-	$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
+	)\
 )
 endef
 
-
-# old implementation, now deprecated
-# anrem-def-modx = $(eval MOD_$(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)) := $1)
-
 #
 # generate MOD_x variables for each module path in the given list
+# @param $1 list of paths for which the MOD variables have to be
+# defined
 #
 anrem-export-modules = $(foreach _MODULE,$1,$(call anrem-def-modx,$(_MODULE)))
-
 
 ##################################### target handling
 

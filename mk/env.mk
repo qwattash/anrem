@@ -7,7 +7,8 @@ ANREM_TOP := $(shell pwd)
 
 #list of modules to be traversed during the inclusion phase
 #see http://perldoc.perl.org/perlre.html#Extended-Patterns
-ANREM_MODULES := $(filter-out $(ANREM_COMPONENTS), $(shell ls -Rl | grep -oP "(?<=^\.\/)[A-Za-z0-9\/_-]*(?=:$$)"))
+ANREM_MODULES := $(strip $(foreach _MODULE, $(shell ls -Rl | grep -oP "(?<=^\.\/)[A-Za-z0-9\/_-]*(?=:$$)"),\
+	$(if $(wildcard $(_MODULE)/module.mk), $(_MODULE))))
 
 #user defined targets list
 ANREM_BUILD_TARGETS :=
@@ -27,3 +28,10 @@ NULL :=
 
 # space variable useful in some cases
 SPACE := $(NULL) $(NULL)
+
+# stores names of MOD_<module_name> variables that have been exported so far
+# this is used to detect and manage clashes in module vars naming
+MOD_VAR_NAMES := $(NULL)
+# this is used along MOD_VAR_NAMES to keep track of modules for which a MOD
+# variable is defined
+EXPORTED_MODULES := $(NULL)
