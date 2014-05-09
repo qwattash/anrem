@@ -33,10 +33,45 @@ anrem-current-path = $(ANREM_CURRENT_MODULE)
 # As an extension to limit the effect of a changing module name it can be passed
 # the name to use as argument to this function.
 # This function is equivalent to is $MOD_mymodule := $(call anrem-current-path)
+# when no name clashes occur
 # @param $1 module path
 # @param $2 optional name of the module to use
 #
-anrem-def-modx = $(eval MOD_$(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)) := $1)
+
+# the variable might be moved somewhere else?
+MOD_VAR_NAMES := $(NULL)
+# comments can not be done inside the define so deal with it!
+# First of all check whether the path has already been seen by the export function, if not go on, else NOP
+# Secondly get the name of the module into a variable used locally
+# Then check again for the name of the module inside the exported paths
+# if the name is found, this is a problem! Notify the user with a warning and rename both modules' MOD_x var
+# by appending the 
+# else everything ok, export the MOD_x var as normal
+
+define anrem-def-modx =
+$(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
+$(if $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
+	$(eval anrem-def-modx-duplicate := $(MOD_$(anrem-def-modx-name)))\
+	$(warning found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
+	 	Consider assigning MOD variable manually)\
+	$(eval undefine MOD_$(anrem-def-modx-name))\
+	$(eval MOD_VAR_NAMES := $(filter-out $(anrem-def-modx-name),$(MOD_VAR_NAMES)))\
+	$(eval anrem-def-modx-duplicate-name := $(subst /,_,$(anrem-def-modx-duplicate)))\
+	$(eval anrem-def-modx-name := $(subst /,_,$1))\
+	$(eval MOD_$(anrem-def-modx-name) := $1)\
+	$(eval MOD_$(anrem-def-modx-duplicate-name) := $(anrem-def-modx-duplicate))\
+	$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
+	$(eval MOD_VAR_NAMES += $(anrem-def-modx-duplicate-name))\
+,\
+	$(eval MOD_$(anrem-def-modx-name) := $1)\
+	$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
+)
+endef
+
+
+# old implementation, now deprecated
+# anrem-def-modx = $(eval MOD_$(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)) := $1)
+
 #
 # generate MOD_x variables for each module path in the given list
 #
