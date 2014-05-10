@@ -16,7 +16,7 @@ anrem-optarg = $(if $(1),$(1),$(2))
 # include given modules, this function MUST be used to include
 # the project modules
 # @param $1 list of modules to be included
-anrem-include-modules = $(foreach ANREM_CURRENT_MODULE,$(1),$(eval -include $(ANREM_CURRENT_MODULE)/module.mk))
+anrem-include-modules = $(foreach ANREM_CURRENT_MODULE,$(1),$(eval -include $(wildcard $(ANREM_CURRENT_MODULE)/*.mk)))
 
 #
 # retrieve the current path of the module
@@ -71,11 +71,12 @@ anrem-current-path = $(ANREM_CURRENT_MODULE)
 define anrem-def-modx =
 $(if $(filter $1,$(EXPORTED_MODULES)),,\
 	$(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
-	$(if $(findstring $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
-		$(eval EXPORTED_MODULES += $1)\
+	$(eval EXPORTED_MODULES += $1)\
+	$(if $(filter $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
 		$(eval anrem-def-modx-duplicate := $(MOD_$(anrem-def-modx-name)))\
-		$(warning found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
-	 		Consider assigning MOD variable manually)\
+		$(warning Found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
+	 		Conflict has been resolved automatically,\
+			however consider declaring module variables manually as shown in the docs.)\
 		$(eval undefine MOD_$(anrem-def-modx-name))\
 		$(eval MOD_VAR_NAMES := $(filter-out $(anrem-def-modx-name),$(MOD_VAR_NAMES)))\
 		$(eval anrem-def-modx-duplicate-name := $(subst /,_,$(anrem-def-modx-duplicate)))\
@@ -85,9 +86,8 @@ $(if $(filter $1,$(EXPORTED_MODULES)),,\
 		$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
 		$(eval MOD_VAR_NAMES += $(anrem-def-modx-duplicate-name))\
 	,\
-	$(eval EXPORTED_MODULES += $1)\
-	$(eval MOD_$(anrem-def-modx-name) := $1)\
-	$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
+		$(eval MOD_$(anrem-def-modx-name) := $1)\
+		$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
 	)\
 )
 endef
@@ -111,7 +111,7 @@ endef
 #
 define anrem-export-modules = 
 $(foreach _MODULE,$(1),\
-	$(eval anrem-export-modules-mk := $(wildcard $(_MODULE)/*.mk))\
+	$(eval anrem-export-modules-mk := $(subst $(SPACE),_,$(wildcard $(_MODULE)/*.mk)))\
 	$(eval anrem-export-modules-name := $(subst $(dir $(anrem-export-modules-mk)),,$(basename $(anrem-export-modules-mk))))\
 	$(if $(filter module,$(anrem-export-modules-name)),\
 		$(call anrem-def-modx, $(_MODULE))\
