@@ -97,7 +97,34 @@ endef
 # @param $1 list of paths for which the MOD variables have to be
 # defined
 #
-anrem-export-modules = $(foreach _MODULE,$1,$(call anrem-def-modx,$(_MODULE)))
+#anrem-export-modules = $(foreach _MODULE,$1,$(call anrem-def-modx,$(_MODULE)))
+
+#
+# generate MOD_x variables for each module path in the given list
+# the MOD variables are named in the following way:
+# i) the module "*.mk" is named "module.mk" -> use automatic module name resolution (see anrem-def-modx)
+# ii) the moduel "*.mk" is named starting with an underscore "_" (such as "_module.mk") the module is ignored
+#	(see anrem-exclude-modx)
+# iii) the module "*.mk" is named with some other name (such as "custom.mk") the module MOD variable will
+#	be named after the "*.mk" name (in this case MOD_custom) provided that the name is not already in use
+# @param $1 list of modules to inspect
+#
+define anrem-export-modules = 
+$(foreach _MODULE,$(1),\
+	$(eval anrem-export-modules-mk := $(wildcard $(_MODULE)/*.mk))\
+	$(eval anrem-export-modules-name := $(subst $(dir $(anrem-export-modules-mk)),,$(basename $(anrem-export-modules-mk))))\
+	$(if $(filter module,$(anrem-export-modules-name)),\
+		$(call anrem-def-modx, $(_MODULE))\
+	,\
+		$(if $(filter _%,$(anrem-export-modules-name)),\
+			$(call anrem-exclude-modx,$(_MODULE))\
+		,\
+			$(call anrem-def-modx, $(_MODULE), $(anrem-export-modules-name))\
+		)\
+	)\
+)
+endef
+
 
 #
 # exclude given module from MOD variable generation

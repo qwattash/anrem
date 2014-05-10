@@ -17,28 +17,18 @@ BUILDDIR := test_src/build
 # To fix this the user is given the opportunity (and is strongly encouraged)
 # to define himself the variables for conflicting modules in the project.mk
 # as follows.
-$(call anrem-def-modx, test_src/calc/main, custom)
+#$(call anrem-def-modx, test_src/calc/main, custom)
 
 # for some other reasons, and because of name clashes you may want to ignore the
 # generation of MOD variables for some modules, this can be done by
 #$(call anrem-exclude-modx, test_src/calc/main)
 
-
-# experimental MOD variable definition based on module.mk name
-define anrem-def-modx-exp = 
-$(foreach _MODULE,$(ANREM_MODULES),\
-	$(eval anrem-def-modx-exp := $(wildcard $(_MODULE)/%.mk))\
-	$(eval anrem-def-modx-name := $(subst $(dir $(anrem-def-modx-exp)),,$(basename $(anrem-def-modx-exp))))\
-	$(if $(filter module,$(anrem-def-modx-name)),\
-		$(call anrem-def-modx, $(_MODULE))\
-	,\
-		$(call anrem-def-modx, $(_MODULE), $(anrem-def-modx-name))\
-	)\
-)
-endef
-
-#$(call anrem-def-modx-exp)
-#$(info $(EXPORTED_MODULES))
-#$(info $(MOD_VAR_NAMES))
-
-#$(error dbg)
+# Now, the two function calls above are commented to show the alternative method for
+# defining custom MOD variable names and ignoring modules, this can be done locally
+# within each module by simply renaming the ".mk" file to a name.
+# The following patterns are accepted:
+# "module.mk": automatic MOD variable naming using the folder name(s)
+# "_*.mk": everything started with a "_" is treated as an excluded module for the MOD variables
+# 	declaration system (just like anrem-exclude-modx)
+# "*.mk": everything not starting with a "_" and not named "module.mk" is treated as a custom name
+#	to use (just like anrem-def-modx)

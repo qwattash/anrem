@@ -7,8 +7,13 @@ ANREM_TOP := $(shell pwd)
 
 #list of modules to be traversed during the inclusion phase
 #see http://perldoc.perl.org/perlre.html#Extended-Patterns
-ANREM_MODULES := $(strip $(foreach _MODULE, $(shell ls -Rl | grep -oP "(?<=^\.\/)[A-Za-z0-9\/_-]*(?=:$$)"),\
-	$(if $(wildcard $(_MODULE)/module.mk), $(_MODULE))))
+ANREM_MODULES := $(strip \
+$(filter-out $(ANREM_COMPONENTS),\
+	$(foreach _MODULE, $(shell ls -Rl | grep -oP "(?<=^\.\/)[A-Za-z0-9\/_-]*(?=:$$)"),\
+		$(if $(wildcard $(_MODULE)/*.mk), $(_MODULE))\
+	)\
+)\
+)
 
 #user defined targets list
 ANREM_BUILD_TARGETS :=
