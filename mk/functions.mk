@@ -99,6 +99,12 @@ endef
 #
 anrem-export-modules = $(foreach _MODULE,$1,$(call anrem-def-modx,$(_MODULE)))
 
+#
+# exclude given module from MOD variable generation
+# @param $1 module to be excluded
+#
+anrem-exclude-modx = $(eval EXPORTED_MODULES += $1)
+
 ##################################### target handling
 
 #

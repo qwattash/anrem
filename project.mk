@@ -18,3 +18,7 @@ BUILDDIR := test_src/build
 # to define himself the variables for conflicting modules in the project.mk
 # as follows.
 $(call anrem-def-modx, test_src/calc/main, custom)
+
+# for some other reasons, and because of name clashes you may want to ignore the
+# generation of MOD variables for some modules, this can be done by
+#$(call anrem-exclude-modx, test_src/calc/main)
