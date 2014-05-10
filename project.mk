@@ -22,3 +22,23 @@ $(call anrem-def-modx, test_src/calc/main, custom)
 # for some other reasons, and because of name clashes you may want to ignore the
 # generation of MOD variables for some modules, this can be done by
 #$(call anrem-exclude-modx, test_src/calc/main)
+
+
+# experimental MOD variable definition based on module.mk name
+define anrem-def-modx-exp = 
+$(foreach _MODULE,$(ANREM_MODULES),\
+	$(eval anrem-def-modx-exp := $(wildcard $(_MODULE)/%.mk))\
+	$(eval anrem-def-modx-name := $(subst $(dir $(anrem-def-modx-exp)),,$(basename $(anrem-def-modx-exp))))\
+	$(if $(filter module,$(anrem-def-modx-name)),\
+		$(call anrem-def-modx, $(_MODULE))\
+	,\
+		$(call anrem-def-modx, $(_MODULE), $(anrem-def-modx-name))\
+	)\
+)
+endef
+
+#$(call anrem-def-modx-exp)
+#$(info $(EXPORTED_MODULES))
+#$(info $(MOD_VAR_NAMES))
+
+#$(error dbg)
