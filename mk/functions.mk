@@ -147,6 +147,13 @@ anrem-build = $(eval ANREM_BUILD_TARGETS += $(strip $(1)))
 anrem-clean = $(eval ANREM_BUILD_CLEAN += $(strip $(1)))
 
 #
+# add a target to the test targets list, the list is meant to hold
+# targets used to build unit-tests or other testing code
+# @param $1 the target to add to the list
+#
+anrem-test = $(eval ANREM_TEST_TARGETS += $(strip $(1)))
+
+#
 # define the local path for a given target
 # @param $1 target for which the path is defined
 #

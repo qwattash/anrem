@@ -1,5 +1,3 @@
-BUILDDIR := test_src/build
-
 # custom module variables for modules with the same name
 # for instance test_src/main and test_src/calc/main would
 # end up in the same variable MOD_main

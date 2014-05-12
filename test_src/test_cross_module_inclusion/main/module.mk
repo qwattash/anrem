@@ -7,11 +7,11 @@
 # get current module path, this can be used later for a number of
 # purposes
 CURRENT := $(call anrem-current-path)
-
+BUILDDIR := $(CURRENT)/../build
 # these are local variables defined with the help of the auto-inclusion system CURRENT path
 # local variables are notationally expensive as you can see below, so use them only if it
 # is really necessary
-# notice also that the BUILDDIR variable is defined into project.mk
+# notice also that the BUILDDIR variable can be defined into project.mk
 # project.mk can be used almost for any project-specific functions or variables that
 # do not fit into mk/config.mk
 BUILD_TARGETS_$(CURRENT) := $(addprefix $(BUILDDIR)/,hello)
@@ -50,7 +50,7 @@ $(call anrem-target, $(HELLO_obj)): $(HELLO_deps)
 
 $(call anrem-target, hello_clean):
 	rm -f $(path)/*.o
-	rm -f $(BUILD_TARGETS_$(CURRENT))
+	rm -f $(BUILD_TARGETS_$(path))
 
 # those add to the global anrem build and clean targets the targets defined above
 # in future they may be merged into anrem-target directly

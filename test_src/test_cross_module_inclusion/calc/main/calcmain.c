@@ -14,7 +14,7 @@
 int prompt(char* str)
 {
   printf("%s:", str);
-  int x = 0;
-  scanf("%d", &x);
-  return x;
+  //int x = 0;
+  //scanf("%d", &x);
+  return 100;
 }
