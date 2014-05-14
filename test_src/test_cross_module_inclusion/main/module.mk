@@ -46,7 +46,11 @@ $(call anrem-target, $(BUILD_TARGETS_$(CURRENT)) ): $(HELLO_obj) $(CALC_obj_$(CU
 $(call anrem-target, $(HELLO_obj)): $(HELLO_deps)
 # note that hello.c includes calc.h which is in another module
 # the problem is solved by using the $MOD_calc as a possible include dir
-	$(CC) -c -I $(MOD_calc) -I $(MOD_custom) -o $@ $^
+# note also that anrem-path-cut usage is shown here as an example
+# the MOD_calc path is cut by removing the last subdirectory and the header will
+# need to be included as "calc/myheader.h".
+# This may be useful in case of header name clashes or other situations.
+	$(CC) -c -I $(call anrem-path-cut, 1, $(MOD_calc)) -I $(MOD_custom) -o $@ $^
 
 $(call anrem-target, hello_clean):
 	rm -f $(path)/*.o

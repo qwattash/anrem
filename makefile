@@ -42,7 +42,7 @@ include $(ANREM_TOP)/project.mk
 # export MOD_x variables that
 # relate a module name with its path
 #
-$(call anrem-export-modules,$(ANREM_MODULES))
+$(call anrem-mod-export,$(ANREM_MODULES))
 
 #
 # include project modules

@@ -15,11 +15,11 @@
 # To fix this the user is given the opportunity (and is strongly encouraged)
 # to define himself the variables for conflicting modules in the project.mk
 # as follows.
-#$(call anrem-def-modx, test_src/calc/main, custom)
+#$(call anrem-mod-var, test_src/calc/main, custom)
 
 # for some other reasons, and because of name clashes you may want to ignore the
 # generation of MOD variables for some modules, this can be done by
-#$(call anrem-exclude-modx, test_src/calc/main)
+#$(call anrem-mod-exclude, test_src/calc/main)
 
 # Now, the two function calls above are commented to show the alternative method for
 # defining custom MOD variable names and ignoring modules, this can be done locally
@@ -30,3 +30,4 @@
 # 	declaration system (just like anrem-exclude-modx)
 # "*.mk": everything not starting with a "_" and not named "module.mk" is treated as a custom name
 #	to use (just like anrem-def-modx)
+

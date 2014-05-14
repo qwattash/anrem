@@ -16,7 +16,7 @@
  * A: ANREM gives the possibility to use less than the complete directory tree to the -I option
  * so you may use here "bla/calc.h" and tell anrem to strip the bla part from the -I option
  */
-#include "calc.h"
+#include "calc/calc.h"
 #include "calcmain.h"
 
 int main(int argc, char* argv[])

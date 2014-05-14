@@ -16,8 +16,6 @@ BUILD_TARGETS_$(CURRENT) := $(addprefix $(CURRENT)/,hello)
 deps_$(CURRENT) = $(addprefix $(CURRENT)/,hello.c)
 
 $(call anrem-target, $(BUILD_TARGETS_$(CURRENT))): $(deps_$(CURRENT))
-# note that hello.c includes calc.h which is in another module
-# the problem is solved by using the $MOD_calc as a possible include dir
 	$(CC) -o $@ $^
 
 $(call anrem-target, clean_$(CURRENT)):

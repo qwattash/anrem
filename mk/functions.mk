@@ -10,13 +10,27 @@
 # @param $2 default
 anrem-optarg = $(if $(1),$(1),$(2))
 
+#
+# reverse a list
+# @param $1 list to be reversed
+#
+define anrem-list-reverse = 
+$(strip \
+$(eval anrem-list-reverse-out := $(NULL))\
+$(foreach anrem-list-reverse-item,$1,\
+	$(eval anrem-list-reverse-out := $(strip $(anrem-list-reverse-item) $(anrem-list-reverse-out)))\
+)\
+$(anrem-list-reverse-out)\
+)
+endef
+
 ##################################### modules handling
 
 #
 # include given modules, this function MUST be used to include
 # the project modules
 # @param $1 list of modules to be included
-anrem-include-modules = $(foreach ANREM_CURRENT_MODULE,$(1),$(eval -include $(wildcard $(ANREM_CURRENT_MODULE)/*.mk)))
+anrem-include-modules = $(foreach ANREM_CURRENT_MODULE,$(1),$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk))))
 
 #
 # retrieve the current path of the module
@@ -68,58 +82,51 @@ anrem-current-path = $(ANREM_CURRENT_MODULE)
 # if the name is found, this is a problem! Notify the user with a warning and rename both modules' MOD_x var
 # by appending the 
 # else everything ok, export the MOD_x var as normal
-define anrem-def-modx =
+define anrem-mod-var =
 $(if $(filter $1,$(EXPORTED_MODULES)),,\
-	$(eval anrem-def-modx-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
+	$(eval anrem-def-mod-var-name := $(call anrem-optarg,$(strip $2),$(subst $(dir $1),,$1)))\
 	$(eval EXPORTED_MODULES += $1)\
-	$(if $(filter $(anrem-def-modx-name),$(MOD_VAR_NAMES)),\
-		$(eval anrem-def-modx-duplicate := $(MOD_$(anrem-def-modx-name)))\
-		$(warning Found modules with same name: $(strip $1), $(anrem-def-modx-duplicate).\
+	$(if $(filter $(anrem-def-mod-var-name),$(MOD_VAR_NAMES)),\
+		$(eval anrem-def-mod-var-duplicate := $(MOD_$(anrem-def-mod-var-name)))\
+		$(warning Found modules with same name: $(strip $1), $(anrem-def-mod-var-duplicate).\
 	 		Conflict has been resolved automatically,\
 			however consider declaring module variables manually as shown in the docs.)\
-		$(eval undefine MOD_$(anrem-def-modx-name))\
-		$(eval MOD_VAR_NAMES := $(filter-out $(anrem-def-modx-name),$(MOD_VAR_NAMES)))\
-		$(eval anrem-def-modx-duplicate-name := $(subst /,_,$(anrem-def-modx-duplicate)))\
-		$(eval anrem-def-modx-name := $(subst /,_,$1))\
-		$(eval MOD_$(anrem-def-modx-name) := $1)\
-		$(eval MOD_$(anrem-def-modx-duplicate-name) := $(anrem-def-modx-duplicate))\
-		$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
-		$(eval MOD_VAR_NAMES += $(anrem-def-modx-duplicate-name))\
+		$(eval undefine MOD_$(anrem-def-mod-var-name))\
+		$(eval MOD_VAR_NAMES := $(filter-out $(anrem-def-mod-var-name),$(MOD_VAR_NAMES)))\
+		$(eval anrem-def-mod-var-duplicate-name := $(subst /,_,$(anrem-def-mod-var-duplicate)))\
+		$(eval anrem-def-mod-var-name := $(subst /,_,$1))\
+		$(eval MOD_$(anrem-def-mod-var-name) := $1)\
+		$(eval MOD_$(anrem-def-mod-var-duplicate-name) := $(anrem-def-mod-var-duplicate))\
+		$(eval MOD_VAR_NAMES += $(anrem-def-mod-var-name))\
+		$(eval MOD_VAR_NAMES += $(anrem-def-mod-var-duplicate-name))\
 	,\
-		$(eval MOD_$(anrem-def-modx-name) := $1)\
-		$(eval MOD_VAR_NAMES += $(anrem-def-modx-name))\
+		$(eval MOD_$(anrem-def-mod-var-name) := $1)\
+		$(eval MOD_VAR_NAMES += $(anrem-def-mod-var-name))\
 	)\
 )
 endef
 
 #
 # generate MOD_x variables for each module path in the given list
-# @param $1 list of paths for which the MOD variables have to be
-# defined
-#
-#anrem-export-modules = $(foreach _MODULE,$1,$(call anrem-def-modx,$(_MODULE)))
-
-#
-# generate MOD_x variables for each module path in the given list
 # the MOD variables are named in the following way:
-# i) the module "*.mk" is named "module.mk" -> use automatic module name resolution (see anrem-def-modx)
+# i) the module "*.mk" is named "module.mk" -> use automatic module name resolution (see anrem-def-mod-var)
 # ii) the moduel "*.mk" is named starting with an underscore "_" (such as "_module.mk") the module is ignored
-#	(see anrem-exclude-modx)
+#	(see anrem-exclude-mod-var)
 # iii) the module "*.mk" is named with some other name (such as "custom.mk") the module MOD variable will
 #	be named after the "*.mk" name (in this case MOD_custom) provided that the name is not already in use
 # @param $1 list of modules to inspect
 #
-define anrem-export-modules = 
+define anrem-mod-export = 
 $(foreach _MODULE,$(1),\
-	$(eval anrem-export-modules-mk := $(subst $(SPACE),_,$(wildcard $(_MODULE)/*.mk)))\
-	$(eval anrem-export-modules-name := $(subst $(dir $(anrem-export-modules-mk)),,$(basename $(anrem-export-modules-mk))))\
-	$(if $(filter module,$(anrem-export-modules-name)),\
-		$(call anrem-def-modx, $(_MODULE))\
+	$(eval anrem-mod-export-mk := $(subst $(SPACE),_,$(word 1,$(wildcard $(_MODULE)/*.mk))))\
+	$(eval anrem-mod-export-name := $(subst $(dir $(anrem-mod-export-mk)),,$(basename $(anrem-mod-export-mk))))\
+	$(if $(filter module,$(anrem-mod-export-name)),\
+		$(call anrem-mod-var, $(_MODULE))\
 	,\
-		$(if $(filter _%,$(anrem-export-modules-name)),\
-			$(call anrem-exclude-modx,$(_MODULE))\
+		$(if $(filter _%,$(anrem-mod-export-name)),\
+			$(call anrem-mod-exclude,$(_MODULE))\
 		,\
-			$(call anrem-def-modx, $(_MODULE), $(anrem-export-modules-name))\
+			$(call anrem-mod-var, $(_MODULE), $(anrem-mod-export-name))\
 		)\
 	)\
 )
@@ -130,7 +137,7 @@ endef
 # exclude given module from MOD variable generation
 # @param $1 module to be excluded
 #
-anrem-exclude-modx = $(eval EXPORTED_MODULES += $1)
+anrem-mod-exclude = $(eval EXPORTED_MODULES += $1)
 
 ##################################### target handling
 
@@ -166,6 +173,21 @@ anrem-target-defpath = $(eval $(1): path:=$(ANREM_CURRENT_MODULE))
 anrem-target = $(strip $(1))$(call anrem-target-defpath, $(strip $(1)))
 
 ############################################# path handling
+
+#
+# removes the last $1 subdirectories from a path
+# e.g. anrem-path-tr, 2, my/fancy/path/to/something -> my/fancy/path
+# @param $1 number of subdirs to remove from the string
+# @param $2 path string
+#
+define anrem-path-cut = 
+$(strip \
+$(eval anrem-tmp-pathlist := $(subst /,$(SPACE),$(strip $2)))\
+$(eval anrem-tmp-filter := $(wordlist 1,$1,$(strip $(call anrem-list-reverse, $(anrem-tmp-pathlist)))))\
+$(eval anrem-tmp-resultlist := $(filter-out $(anrem-tmp-filter),$(anrem-tmp-pathlist)))\
+$(subst $(SPACE),/,$(anrem-tmp-resultlist))\
+)
+endef
 
 #
 # join relative path with absolute path, safe usage outside make rules
