@@ -192,12 +192,24 @@ anrem-target = $(strip $1)$(call anrem-target-defpath, $(strip $1))
 # @param $1 number of subdirs to remove from the string
 # @param $2 path string
 #
+#define anrem-path-cut = 
+#$(strip \
+#$(eval anrem-tmp-pathlist := $(subst /,$(SPACE),$(strip $2)))\
+#$(eval anrem-tmp-filter := $(wordlist 1,$1,$(strip $(call anrem-list-reverse, $(anrem-tmp-pathlist)))))\
+#$(eval anrem-tmp-resultlist := $(filter-out $(anrem-tmp-filter),$(anrem-tmp-pathlist)))\
+#$(subst $(SPACE),/,$(anrem-tmp-resultlist))\
+#)
+#endef
 define anrem-path-cut = 
 $(strip \
-$(eval anrem-tmp-pathlist := $(subst /,$(SPACE),$(strip $2)))\
-$(eval anrem-tmp-filter := $(wordlist 1,$1,$(strip $(call anrem-list-reverse, $(anrem-tmp-pathlist)))))\
-$(eval anrem-tmp-resultlist := $(filter-out $(anrem-tmp-filter),$(anrem-tmp-pathlist)))\
-$(subst $(SPACE),/,$(anrem-tmp-resultlist))\
+$(eval anrem-path-cut-pathlist := $(subst /,$(SPACE),$(strip $2)))\
+$(eval anrem-path-cut-filter := $(wordlist 1,$1,$(anrem-path-cut-pathlist)))\
+$(foreach anrem-path-cut-iter,$(anrem-path-cut-filter),\
+	$(eval anrem-path-cut-pathlist := $(anrem-path-cut-pathlist)-)\
+	$(eval anrem-path-cut-pathlist := $(patsubst %-,$(NULL),$(anrem-path-cut-pathlist)))\
+)\
+$(eval anrem-path-cut-pathlist := $(patsubst -,$(NULL),$(anrem-path-cut-pathlist)))\
+$(subst $(SPACE),/,$(strip $(anrem-path-cut-pathlist)))\
 )
 endef
 
