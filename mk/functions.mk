@@ -142,35 +142,47 @@ anrem-mod-exclude = $(eval EXPORTED_MODULES += $1)
 ##################################### target handling
 
 #
-# add given target to the global targets list
+# declare a target and add given it to the global targets list
 # that is executed when make all is run
+# @param $1 target
 #
-anrem-build = $(eval ANREM_BUILD_TARGETS += $(strip $(1)))
-
+define anrem-build = 
+$(call anrem-target, $1)\
+$(eval ANREM_BUILD_TARGETS += $(strip $1))
+endef
 #
-# add given target to the clean list
+# declare a clean target and add given target to the clean list
 # that is executed whenever make clean is issued
+# If the target name is omitted one is automatically generated
+# @param $1 target
 #
-anrem-clean = $(eval ANREM_BUILD_CLEAN += $(strip $(1)))
+define anrem-clean = 
+$(call anrem-target, $(call anrem-optarg,$1,clean_$(call anrem-current-path)))\
+$(eval ANREM_BUILD_CLEAN += $(strip $(call anrem-optarg,$1,clean_$(call anrem-current-path))))
+endef
 
 #
 # add a target to the test targets list, the list is meant to hold
 # targets used to build unit-tests or other testing code
 # @param $1 the target to add to the list
 #
-anrem-test = $(eval ANREM_TEST_TARGETS += $(strip $(1)))
+define anrem-test = 
+$(call anrem-target, $1)\
+$(eval ANREM_TEST_TARGETS += $(strip $1))
+endef
 
 #
 # define the local path for a given target
 # @param $1 target for which the path is defined
 #
-anrem-target-defpath = $(eval $(1): path:=$(ANREM_CURRENT_MODULE))
+anrem-target-defpath = $(eval $1: path:=$(ANREM_CURRENT_MODULE))
 
 #
-# define a target relative to current path
+# declare a target in the current module path.
+# This does not add the target to any anrem target list.
 # @param $1 target absolute name
 #
-anrem-target = $(strip $(1))$(call anrem-target-defpath, $(strip $(1)))
+anrem-target = $(strip $1)$(call anrem-target-defpath, $(strip $1))
 
 ############################################# path handling
 

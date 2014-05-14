@@ -1,3 +1,2 @@
-Merge functionalities from anrem-target and anrem-build/anrem-clean
 Make anrem-clean define the target name automatically (optional argument here)
 Investigate implementation of default and automatic targets such as *.o: *.c

@@ -29,5 +29,4 @@
 # "_*.mk": everything started with a "_" is treated as an excluded module for the MOD variables
 # 	declaration system (just like anrem-exclude-modx)
 # "*.mk": everything not starting with a "_" and not named "module.mk" is treated as a custom name
-#	to use (just like anrem-def-modx)
-
+#	to use (just like anrem-def-modx

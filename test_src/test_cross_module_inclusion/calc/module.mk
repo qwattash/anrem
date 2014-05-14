@@ -14,7 +14,5 @@ CALC_obj = $(CALC_deps:%.c=%.o)
 $(call anrem-target, $(CALC_obj)): $(CALC_deps)
 	$(CC) -c -o $@ $^
 
-$(call anrem-target, calc_clean):
+$(call anrem-clean):
 	rm -f $(path)/*.o
-
-$(call anrem-clean, calc_clean)

@@ -15,13 +15,8 @@ BUILD_TARGETS_$(CURRENT) := $(addprefix $(CURRENT)/,hello)
 
 deps_$(CURRENT) = $(addprefix $(CURRENT)/,hello.c)
 
-$(call anrem-target, $(BUILD_TARGETS_$(CURRENT))): $(deps_$(CURRENT))
+$(call anrem-build, $(BUILD_TARGETS_$(CURRENT))): $(deps_$(CURRENT))
 	$(CC) -o $@ $^
 
-$(call anrem-target, clean_$(CURRENT)):
+$(call anrem-clean):
 	rm -f $(BUILD_TARGETS_$(path))
-
-# those add to the global anrem build and clean targets the targets defined above
-# in future they may be merged into anrem-target directly
-$(call anrem-build, $(BUILD_TARGETS_$(CURRENT)))
-$(call anrem-clean, clean_$(CURRENT))

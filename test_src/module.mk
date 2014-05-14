@@ -7,11 +7,8 @@
 #
 CURRENT := $(call anrem-current-path)
 
-$(call anrem-target, test_$(CURRENT)):
+$(call anrem-test, test_$(CURRENT)):
 	@echo "Testing ANREM outputs"
 	$(MOD_mod1)/hello
 	$(MOD_name)/hello
 	$(MOD_main)/../build/hello
-
-
-$(call anrem-test, test_$(CURRENT))
