@@ -168,7 +168,7 @@ endef
 #
 define anrem-test = 
 $(call anrem-target, $1)\
-$(eval ANREM_TEST_TARGETS += $(strip $1))
+$(eval ANREM_TEST_TARGETS += $(strip $(call anrem-optarg,$1,test_$(call anrem-current-path))))
 endef
 
 #
@@ -192,14 +192,6 @@ anrem-target = $(strip $1)$(call anrem-target-defpath, $(strip $1))
 # @param $1 number of subdirs to remove from the string
 # @param $2 path string
 #
-#define anrem-path-cut = 
-#$(strip \
-#$(eval anrem-tmp-pathlist := $(subst /,$(SPACE),$(strip $2)))\
-#$(eval anrem-tmp-filter := $(wordlist 1,$1,$(strip $(call anrem-list-reverse, $(anrem-tmp-pathlist)))))\
-#$(eval anrem-tmp-resultlist := $(filter-out $(anrem-tmp-filter),$(anrem-tmp-pathlist)))\
-#$(subst $(SPACE),/,$(anrem-tmp-resultlist))\
-#)
-#endef
 define anrem-path-cut = 
 $(strip \
 $(eval anrem-path-cut-pathlist := $(subst /,$(SPACE),$(strip $2)))\
@@ -211,6 +203,26 @@ $(foreach anrem-path-cut-iter,$(anrem-path-cut-filter),\
 $(subst $(SPACE),/,$(strip $(anrem-path-cut-pathlist)))\
 )
 endef
+
+#
+# Local variables utility, this can be used to declare and access
+# local variables
+# @param $1 symbol name
+#
+anrem-local = $(strip $1_$(call anrem-current-path))
+
+#
+# Local variables utility, store the given value in given local var
+# @param $1 local symbol name
+# @param $2 value to store
+#
+anrem-local-set = $(eval $(call anrem-local, $1) := $2)
+
+#
+# Local variables utility, get the value of a given local var
+# @param $1 local symbol name
+#
+anrem-local-get = $($(call anrem-local, $1))
 
 #
 # join relative path with absolute path, safe usage outside make rules
