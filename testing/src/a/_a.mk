@@ -8,10 +8,10 @@ __module_current_path += $(call anrem-current-path)
 
 
 $(call anrem-build, src/a/build):
-	@echo "TODO"
+	@echo -n ""
 
 $(call anrem-clean):
-	@echo "TODO"
+	@echo -n ""
 
 $(call anrem-test):
-	@echo "TODO"
+	@echo -n ""
