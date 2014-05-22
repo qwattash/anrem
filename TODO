@@ -1,2 +1,2 @@
-Make anrem-clean define the target name automatically (optional argument here)
 Investigate implementation of default and automatic targets such as *.o: *.c
+Investigate implementation of automatic .h dependencies generation with gxx

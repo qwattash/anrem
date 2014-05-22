@@ -1,0 +1,38 @@
+#
+# test utilities
+#
+# the sample data are taken from the simulated structure in testing
+#
+
+test_modvars:
+	$(call anrem-warn, Entering modvars.test...)
+# check that mod variables for all the modules have been generated correctly
+	$(call anrem-assert-neq, Checking MOD for src/a is ignored, $(MOD_a), src/a)
+	$(call anrem-assert-eq, Checking MOD for src/a has not experienced conflict, $(origin MOD_src_a), undefined)
+	$(call anrem-assert-eq, Checking MOD for src/b has conflict - no MOD_b, $(origin MOD_b), undefined)
+	$(call anrem-assert-eq, Checking MOD for src/b has conflict - auto resolution, $(MOD_src_b), src/b)
+	$(call anrem-assert-eq, Checking MOD for src/c/f/b has conflict - auto resolution, $(MOD_src_c_f_b), src/c/f/b)
+	$(call anrem-assert-eq, Checking MOD for other with custom name, $(MOD_other), other)
+	$(call anrem-assert-eq, Checking MOD for d with custom name, $(MOD_d), src/c/d)
+	$(call anrem-assert-eq, Checking MOD for src/c/a has ignored the conflict, $(MOD_a), src/c/a)
+	$(call anrem-assert-eq, Checking MOD for src/c/a has ignored the conflict - no fallback MOD, $(origin MOD_src_c_a), undefined)
+# check manually come corner case not included in the test tree
+	$(eval __tmp_mod_names := $(MOD_VAR_NAMES))
+	$(eval __tmp_mod := $(EXPORTED_MODULES))
+	$(eval MOD_VAR_NAMES := $(NULL))
+	$(eval EXPORTED_MODULES := $(NULL))
+# two custom modules conflicting
+	$(call anrem-mod-var, dummy/path/foo, custom_foo)
+	$(call anrem-assert-same-list, Custom named MOD variable for foo added to MOD names, $(MOD_VAR_NAMES), custom_foo)
+	$(call anrem-assert-same-list, Custom named MOD variable for foo added to MOD paths, $(EXPORTED_MODULES), dummy/path/foo)
+	$(call anrem-mod-var, dummy/path/bar)
+	$(call anrem-assert-same-list, MOD variable for bar added to MOD names, $(MOD_VAR_NAMES), custom_foo bar)
+	$(call anrem-assert-same-list, MOD variable for bar added to MOD paths, $(EXPORTED_MODULES), dummy/path/bar dummy/path/foo)
+	$(call anrem-mod-var, dummy/other/baz, custom_foo)
+	$(call anrem-assert-same-list, Conflicting custom named MOD variable for baz added to MOD names,\
+		$(MOD_VAR_NAMES), dummy_path_foo bar dummy_other_baz)
+	$(call anrem-assert-same-list, Conflicting custom named MOD variable for baz added to MOD names,\
+		$(EXPORTED_MODULES), dummy/path/foo dummy/path/bar dummy/other/baz)
+# restore saved state
+	$(eval MOD_VAR_NAMES := $(__tmp_mod_names))
+	$(eval EXPORTED_MODULES := $(__tmp_mod))

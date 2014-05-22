@@ -28,6 +28,9 @@ ANREM_BUILD_CLEAN :=
 #same as BUILD_CLEAN but for debug stuff
 DEBUG_CLEAN :=
 
+#user defined test targets list
+ANREM_TEST_TARGETS :=
+
 # null variable useful for calling functions with null args
 NULL :=
 

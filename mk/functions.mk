@@ -8,7 +8,7 @@
 # substitutes optional argument with given default if no argumen is given
 # @param $1 optarg content
 # @param $2 default
-anrem-optarg = $(if $(1),$(1),$(2))
+anrem-optarg = $(strip $(if $(1),$(1),$(2)))
 
 #
 # reverse a list
@@ -146,9 +146,11 @@ anrem-mod-exclude = $(eval EXPORTED_MODULES += $1)
 # that is executed when make all is run
 # @param $1 target
 #
-define anrem-build = 
+define anrem-build =
+$(strip \
 $(call anrem-target, $1)\
-$(eval ANREM_BUILD_TARGETS += $(strip $1))
+$(eval ANREM_BUILD_TARGETS += $(strip $1))\
+)
 endef
 #
 # declare a clean target and add given target to the clean list
@@ -157,8 +159,10 @@ endef
 # @param $1 target
 #
 define anrem-clean = 
+$(strip \
 $(call anrem-target, $(call anrem-optarg,$1,clean_$(call anrem-current-path)))\
-$(eval ANREM_BUILD_CLEAN += $(strip $(call anrem-optarg,$1,clean_$(call anrem-current-path))))
+$(eval ANREM_BUILD_CLEAN += $(strip $(call anrem-optarg,$1,clean_$(call anrem-current-path))))\
+)
 endef
 
 #
@@ -167,8 +171,10 @@ endef
 # @param $1 the target to add to the list
 #
 define anrem-test = 
-$(call anrem-target, $1)\
-$(eval ANREM_TEST_TARGETS += $(strip $(call anrem-optarg,$1,test_$(call anrem-current-path))))
+$(strip \
+$(call anrem-target, $(call anrem-optarg,$1,test_$(call anrem-current-path)))\
+$(eval ANREM_TEST_TARGETS += $(strip $(call anrem-optarg,$1,test_$(call anrem-current-path))))\
+)
 endef
 
 #

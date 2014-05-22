@@ -1,0 +1,53 @@
+#
+# test specific features of the inclusion system
+#
+# the sample data are taken from the simulated structure in testing
+#
+
+__dirs = $(addprefix src/, a b c/d c/a c/f/b)
+
+__build_targets := $(addsuffix /build, $(__dirs)) other/build
+__clean_targets := $(addprefix clean_, $(__dirs)) non_default_clean
+__test_targets := $(addprefix test_, $(__dirs)) non_default_test
+
+test_targets_init:
+	$(call anrem-warn, Entering targets.test...)
+
+test_targets: test_targets_init special_test_target
+# check consistency of targets exported in the example tree
+	$(call anrem-assert-same-list, Checking anrem build list, $(__build_targets), $(ANREM_BUILD_TARGETS))
+	$(call anrem-assert-same-list, Checking anrem clean list, $(__clean_targets), $(ANREM_BUILD_CLEAN))
+	$(call anrem-assert-same-list, Checking anrem test list, $(__test_targets), $(ANREM_TEST_TARGETS))
+# check that target functions work properly
+# reset build list temporarily
+# lists are restored so that other tests see them clean
+	$(eval __tmp_list := $(ANREM_BUILD_TARGETS))
+	$(eval ANREM_BUILD_TARGETS := $(NULL))
+# anrem-target
+	$(call anrem-assert-eq, Generation of target name, $(call anrem-target, dummy_a), dummy_a)
+	$(call anrem-assert-same-list, Tesiting anrem-target, $(ANREM_BUILD_TARGETS), $(NULL))
+	$(eval ANREM_BUILD_TARGETS := $(NULL))
+# anrem-build
+	$(call anrem-assert-eq, Generation of build target name, $(call anrem-build, dummy_b), dummy_b)
+	@echo $(call anrem-build, dummy_c) > /dev/null
+	$(call anrem-assert-same-list, Tesiting anrem-build, $(ANREM_BUILD_TARGETS), dummy_b dummy_c)
+	$(eval ANREM_BUILD_TARGETS := $(__tmp_list))
+# anrem-clean
+	$(eval __tmp_list := $(ANREM_BUILD_CLEAN))
+	$(eval ANREM_BUILD_CLEAN := $(NULL))
+	$(eval __tmp_current := $(ANREM_CURRENT_MODULE))
+	$(eval ANREM_CURRENT_MODULE := dummy_current__)
+	$(call anrem-assert-eq, Generation of clean target automatic name, $(call anrem-clean), clean_dummy_current__)
+	$(call anrem-assert-same-list, Tesiting anrem-build, $(ANREM_BUILD_CLEAN), clean_dummy_current__)
+	$(call anrem-assert-eq, Generation of clean target custom name, $(call anrem-clean, custom_clean), custom_clean)
+	$(call anrem-assert-same-list, Tesiting anrem-build, $(ANREM_BUILD_CLEAN), custom_clean clean_dummy_current__)
+	$(eval ANREM_BUILD_CLEAN := $(__tmp_list))
+# anrem-test
+	$(eval __tmp_list := $(ANREM_TEST_TARTGETS))
+	$(eval ANREM_TEST_TARGETS := $(NULL))
+	$(call anrem-assert-eq, Generation of test target automatic name, $(call anrem-test), test_dummy_current__)
+	$(call anrem-assert-same-list, Tesiting anrem-build, $(ANREM_TEST_TARGETS), test_dummy_current__)
+	$(call anrem-assert-eq, Generation of test target custom name, $(call anrem-test, custom_test), custom_test)
+	$(call anrem-assert-same-list, Tesiting anrem-build, $(ANREM_TEST_TARGETS), custom_test test_dummy_current__)
+	$(eval ANREM_TEST_TARGETS := $(__tmp_list))
+	$(eval ANREM_CURRENT_MODULE := $(__tmp_current))

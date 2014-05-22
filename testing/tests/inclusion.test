@@ -1,0 +1,17 @@
+#
+# test specific features of the inclusion system
+#
+# the sample data are taken from the simulated structure in testing
+#
+#
+__known_modules := $(addprefix src/,a b c/d c/a c/f/b) other
+
+test_inclusion:
+	$(call anrem-warn, Entering inclusion.test...)
+# check that all target modules have been included, this is done by checking that
+# the modules have registered themselves to a special list __module_inclusion_ack
+	$(call anrem-assert-same-list, Checking modules *.mk execution, $(__known_modules), $(__module_inclusion_ack))
+# check for consistent module list in ANREM
+	$(call anrem-assert-same-list, Checking anrem module list, $(ANREM_MODULES), $(__known_modules))
+# check anrem-current-path output during inclusion
+	$(call anrem-assert-same-list, Checking anrem-current-path output, $(__module_current_path), $(__known_modules))
