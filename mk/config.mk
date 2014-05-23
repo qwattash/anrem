@@ -11,6 +11,7 @@ ARCH :=
 #toolchain
 CC := gcc
 LD := ld
+MAKEDEPEND := gcc -M
 
 #toolchain options
 CFLAGS := 
