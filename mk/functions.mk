@@ -235,3 +235,146 @@ anrem-local-get = $($(call anrem-local, $1))
 # @param $1 module-relative path
 # 
 anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(strip $(1)))
+
+
+######################### automatic dependencies
+#
+# Many thanks to Tom Tromey <tromey@cygnus.com> who devised the method for GNU automake
+# Also many thanks for reporting the method to Paul D. Smith <psmith@gnu.org> at
+# mad-scientist.net/make/autodep.html
+#
+# WARNING: The automatic dependencies functionalities are gcc/g++ only
+#
+
+#
+# Helper that defines the auto target for the current path
+# sed regexp:
+# 1) append current path to generated targets
+#
+# To avoid an error when a .h file is renamed and make is called:
+# 2) put all the requirements for the .o as rules with no body and no dependencies
+#
+#
+define dd-anrem-def-auto-target =
+$(call anrem-current-path)/%.o: $(call anrem-current-path)/%.c
+	@mkdir -p $(call anrem-current-path)/.deps
+# TODO add makedepend hook
+#$$(call anrem-make-depend-hook, $(call anrem-current-path), $*.d.tmp)
+#@sed -e "..." < $$*.d.tmp > $(...path)/.deps/$$*.d
+# TODO update to gcc -MM -MT $$@ -MP > [...]$$*.d
+	$(call anrem-hook-makedepend, $*, $(call anrem-current-path)/$*.d.tmp, $<)
+#$(MAKEDEPEND) $(DEPSFLAGS) $$< | \
+# TODO add sed rule to generate (2)
+# foo.o: foo.c foo.h
+# foo.c:
+# foo.h:
+
+# TODO add rule hook to add custom rule in there
+#sed -e "s/\(.*\.o\)/$$(subst /,\/,$$@)/g" > $(call anrem-current-path)/.deps/$$*.d
+	$(CC) -c -o $$@ $$<
+endef
+
+#
+# define automatic %.o: %.c targets with automatic dependency
+# generation for the local module, this provides separation of
+# modules for what is concerning automatic rules
+# global rules can always defined in project.mk by the user
+#
+define dd-anrem-auto-target =
+$(eval $(call anrem-def-auto-target))\
+$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))
+endef
+
+#
+# Define an automatic target, in general an automatic target in ANREM is
+# a target for which the dependencies are generated automatically by the
+# system, based on the files included by the files involved in the rule.
+#
+# An automatic target is always restricted to the module in which it is defined,
+# that is, automatic targets defined in a module A does not conflict with
+# automatic targets in module B, even if they refer files with the same name
+# (here name is referred to the name of the file, not the full path)
+#
+# There are 4 types of automatic targets in ANREM.
+# i) module-global default automatic target:
+#	has global scope inside the module and its rule is automatically determined
+#	(using a default) in anrem, an example would be
+#	<module_path>/%.o: <module_path>/%.c
+#		$(CC) $(CFLAGS) -c -o $@ $<
+# 
+# ii) module-global automatic target:
+#	has global scope inside the module and its rule is defined by the user (yes, you)
+#	an example is:
+#	<module_path>/%.o: <module_path>/%.c
+#		$(CC) $(CFLAGS) -I $(MOD_includes) -c -o $@ $<
+#	# assuming that the include flag is not in CFLAGS
+#
+# iii) target-specific automatic target:
+#	basically it is an automatic target defined only for a group of user-defined targets
+#	an example is:
+#	$(custom_targets): <module_path>/%.o: <module_path>/%.c
+#		$(CC) $(CFLAGS) -I $(MOD_includes) -c -o $@ $<
+#	# assuming that the include flag is not in CFLAGS
+#
+# iv) target-specific default automatic target:
+#	basically it is a default automatic target defined only for a group of user-defined targets,
+#	its rule is automatically determined (using a default) in anrem, 
+#	an example would be:
+#	$(custom_targets): <module_path>/%.o: <module_path>/%.c
+#		$(CC) $(CFLAGS) -c -o $@ $<
+#
+# You don't have to specify a rule in types (i) and (iv), while a rule declaration is expected
+# for cases (ii) and (iii) after the invocation of this function
+#
+# The job of ANREM is making it easy for you to create those targets and not worry about
+# the dependency files creation, deletion and updating.
+# The creation of dependency files is parametrised using a call hook with the following
+# signature:
+#
+# @param name: matched name in the rule (say %.o: %.c matches file.o, the argument value is "file")
+# @param dependency_file: where the hook should store the dependency list
+# @param source: source file(s) for which the hook should provide the dependencies
+# anrem-hook-makedepend(name, dependency_file, source)
+#
+# The hook can be registered using the hook registration system as normal with type "anrem-hook-makedepend"
+# or can be given directly at the time of declaration of the target/rule as an argument
+#
+#
+#
+# @param [$1]: target pattern (e.g. %.o, which is the default)
+# @param [$2]: source pattern (e.g. %.c, which is the default)
+# @param [$3]: boolean, (True) generate default rule or (False) a custom one is given
+# @param [$4]: scope of the rule, if NULL the scope is global else a target list must be given (see (iii) above)
+# @param [$5]: hook function, if not given the global anrem-hook-makedepend is used
+define anrem-auto-target =
+$(strip \
+$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))\
+$(if $(call anrem-optarg,$(strip $4),$(NULL)),\
+	$(strip $4):\
+)\
+$(call anrem-def-call-auto-hook, $5)
+$(if $(call anrem-optarg,$(strip $3),$(NULL)),\
+	$(call anrem-def-custom-auto-target, $1, $2),\
+	$(call anrem-def-default-auto-target, $1, $2)\
+)\
+)
+endef
+
+#
+#
+#
+#
+#
+
+#
+#
+#
+#
+#
+define anrem-def-custom-auto-target =
+custom_auto_target
+endef
+
+define anrem-def-default-auto-target =
+default_auto_target
+endef

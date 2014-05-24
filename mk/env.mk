@@ -37,6 +37,10 @@ NULL :=
 # space variable useful in some cases
 SPACE := $(NULL) $(NULL)
 
+# booleans
+TRUE := T
+FALSE := $(NULL)
+
 # stores names of MOD_<module_name> variables that have been exported so far
 # this is used to detect and manage clashes in module vars naming
 MOD_VAR_NAMES := $(NULL)
