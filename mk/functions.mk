@@ -177,7 +177,7 @@ $(eval ANREM_TEST_TARGETS += $(strip $(call anrem-optarg,$1,test_$(call anrem-cu
 )
 endef
 
-#
+# TODO migrate to anrem-target-def-var
 # define the local path for a given target
 # @param $1 target for which the path is defined
 #
@@ -189,6 +189,19 @@ anrem-target-defpath = $(eval $1: path:=$(ANREM_CURRENT_MODULE))
 # @param $1 target absolute name
 #
 anrem-target = $(strip $1)$(call anrem-target-defpath, $(strip $1))
+
+############################################# target local variables
+
+#
+# define a target-local symbol for a given target and symbol name
+# this generates something like:
+# <target>: <symbol> := <value>
+# @param $1: target for which the symbol is defined
+# @param $2: symbol to be defined
+# @param $3: value of the symbol
+#
+anrem-target-def-var = $(eval $1: $2 := $3)
+
 
 ############################################# path handling
 
@@ -247,45 +260,6 @@ anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(strip $(1)))
 #
 
 #
-# Helper that defines the auto target for the current path
-# sed regexp:
-# 1) append current path to generated targets
-#
-# To avoid an error when a .h file is renamed and make is called:
-# 2) put all the requirements for the .o as rules with no body and no dependencies
-#
-#
-define dd-anrem-def-auto-target =
-$(call anrem-current-path)/%.o: $(call anrem-current-path)/%.c
-	@mkdir -p $(call anrem-current-path)/.deps
-# TODO add makedepend hook
-#$$(call anrem-make-depend-hook, $(call anrem-current-path), $*.d.tmp)
-#@sed -e "..." < $$*.d.tmp > $(...path)/.deps/$$*.d
-# TODO update to gcc -MM -MT $$@ -MP > [...]$$*.d
-	$(call anrem-hook-makedepend, $*, $(call anrem-current-path)/$*.d.tmp, $<)
-#$(MAKEDEPEND) $(DEPSFLAGS) $$< | \
-# TODO add sed rule to generate (2)
-# foo.o: foo.c foo.h
-# foo.c:
-# foo.h:
-
-# TODO add rule hook to add custom rule in there
-#sed -e "s/\(.*\.o\)/$$(subst /,\/,$$@)/g" > $(call anrem-current-path)/.deps/$$*.d
-	$(CC) -c -o $$@ $$<
-endef
-
-#
-# define automatic %.o: %.c targets with automatic dependency
-# generation for the local module, this provides separation of
-# modules for what is concerning automatic rules
-# global rules can always defined in project.mk by the user
-#
-define dd-anrem-auto-target =
-$(eval $(call anrem-def-auto-target))\
-$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))
-endef
-
-#
 # Define an automatic target, in general an automatic target in ANREM is
 # a target for which the dependencies are generated automatically by the
 # system, based on the files included by the files involved in the rule.
@@ -330,12 +304,12 @@ endef
 # the dependency files creation, deletion and updating.
 # The creation of dependency files is parametrised using a call hook with the following
 # signature:
-#
-# @param name: matched name in the rule (say %.o: %.c matches file.o, the argument value is "file")
+##################------------------------------------------------------------------------------------------- Modify hook signature
+# @param name: matched name in the rule (say %.o: %.c matches file.o, the argument value is "file.o")
 # @param dependency_file: where the hook should store the dependency list
 # @param source: source file(s) for which the hook should provide the dependencies
 # anrem-hook-makedepend(name, dependency_file, source)
-#
+#----------------------------------------------------------------------------------------------------------------
 # The hook can be registered using the hook registration system as normal with type "anrem-hook-makedepend"
 # or can be given directly at the time of declaration of the target/rule as an argument
 #
@@ -346,35 +320,144 @@ endef
 # @param [$3]: boolean, (True) generate default rule or (False) a custom one is given
 # @param [$4]: scope of the rule, if NULL the scope is global else a target list must be given (see (iii) above)
 # @param [$5]: hook function, if not given the global anrem-hook-makedepend is used
+# TODO anrem-optarg calls are pretty useless here...
+#---------------------------------------------------------------------------------------------- SOLUTION #1
 define anrem-auto-target =
 $(strip \
-$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))\
-$(if $(call anrem-optarg,$(strip $4),$(NULL)),\
-	$(strip $4):\
+	$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))\
+	$(if $(call anrem-optarg,$(strip $4),$(NULL)),\
+		$(strip $4):\
+	)\
 )\
-$(call anrem-def-call-auto-hook, $5)
+$(strip \
+	$(call anrem-def-auto-header, \
+		$(call anrem-current-path)/$(strip $1), 
+		$(call anrem-current-path)/$(strip $2)\
+	)\
+)\
+$(NEWLINE)$(TAB)$(strip $(call anrem-def-call-auto-hook, $5))\
 $(if $(call anrem-optarg,$(strip $3),$(NULL)),\
-	$(call anrem-def-custom-auto-target, $1, $2),\
 	$(call anrem-def-default-auto-target, $1, $2)\
-)\
 )
 endef
 
 #
-#
-#
-#
-#
-
-#
-#
-#
-#
-#
-define anrem-def-custom-auto-target =
-custom_auto_target
+# helper that generates the call to the makedepend hook
+# the call is inserted in the rule that is created
+# @param [$1]: the hook function to be used or NULL
+define anrem-def-call-auto-hook =
+$(if $(call anrem-optarg,$(strip $1),$(NULL)),\
+	$(call $1),\
+	$(call anrem-hook-makedepend)\
+)
 endef
 
+#
+# helper that generates the call to the makedepend hook
+# the call is inserted in the rule that is created
+# @param [$1]: the hook function to be used or NULL
+define anrem-def-call-auto-hook-dd =
+gcc -MM -MP -MT $$@ -MF $$(deps)/$$(lastword $$(subst /, ,$$*)).d $$<
+endef
+
+#
+# helper that generates the rule "header"
+# @param [$1]: rule target pattern
+# @param [$2]: rule source pattern
+#
+define anrem-def-auto-header =
+$(call anrem-target-def-var, $(call anrem-optarg,$(strip $1),\%.o), deps, $(call anrem-current-path)/.deps)\
+$(call anrem-optarg,$(strip $1),\%.o): $(call anrem-optarg,$(strip $2),\%.c)
+endef
+
+define anrem-def-auto-target-dd =
+$(call anrem-def-auto-header, %.o, %.c)
+	$(call anrem-def-call-auto-hook-dd)
+	gcc -c -o $$@ $$<
+endef
+
+
+
+#
+# helper that generates the body of the target
+# using a default.
+# default rules are configurable using a hook.
+#
+# @param [$1]: rule target pattern
+# @param [$2]: rule source pattern
+#
 define anrem-def-default-auto-target =
-default_auto_target
+$(call anrem-hook-auto-target-command, \
+	$(call anrem-optarg,$(strip $1),\%.o),\
+	$(call anrem-optarg,$(strip $2),\%.c)\
+)
+endef
+
+# ----------------------------------------------------------------------------------------------- SOLUTION #2
+
+# @param [$1]: target pattern (e.g. %.o, which is the default)
+# @param [$2]: source pattern (e.g. %.c, which is the default)
+# @param [$3]: rule to be used, the variable name that contains the rule
+# @param [$4]: boolean, (True) generate default rule or (False) a custom one is given
+# @param [$5]: scope of the rule, if NULL the scope is global else a target list must be given (see (iii) above)
+# @param [$6]: hook function, if not given the global anrem-hook-makedepend is used
+define anrem-auto-target-2 =
+$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))\
+$(eval $(call anrem-def-auto-target-2, $1, $2, $3, $4, $5, $6))
+endef
+
+
+# rule that will be eval'ed
+define anrem-def-auto-target-2 =
+$(if $(call anrem-optarg,$(strip $5),$(NULL)),\
+		$(strip $5):\
+)\
+$(strip \
+	$(call anrem-def-auto-header-2, \
+		$(call anrem-current-path)/$(strip $1), 
+		$(call anrem-current-path)/$(strip $2)\
+	)\
+)
+	$(strip $(call anrem-def-call-auto-hook-2, $6))
+	$(if $(call anrem-optarg,$(strip $4),$(NULL)),\
+		$(call anrem-def-default-auto-target-2, $1, $2),\
+		$(subst $(NEWLINE),$(NEWLINE)$(TAB),$($(strip $3)))\
+	)
+endef
+
+#
+# helper that generates the call to the makedepend hook
+# the call is inserted in the rule that is created
+# @param [$1]: the hook function to be used or NULL
+define anrem-def-call-auto-hook-2 =
+$(if $(call anrem-optarg,$(strip $1),$(NULL)),\
+	$$(call $1, $$@, $(call anrem-current-path)/.deps/$$(lastword $$(subst /, ,$$*)).d, $$<),\
+	$$(call anrem-hook-makedepend-2, $$@, $(call anrem-current-path)/.deps/$$(lastword $$(subst /, ,$$*)).d, $$<)\
+)
+endef
+
+#
+# helper that generates the call to the makedepend hook
+# the call is inserted in the rule that is created
+# @param [$1]: the hook function to be used or NULL
+#define anrem-def-call-auto-hook =
+#gcc -MM -MP -MT $$@ -MF $$(deps)/$$(lastword $$(subst /, ,$$*)).d $$<
+#endef
+
+#
+# helper that generates the rule "header"
+# @param [$1]: rule target pattern
+# @param [$2]: rule source pattern
+#
+define anrem-def-auto-header-2 =
+$(call anrem-target-def-var, $(call anrem-optarg,$(strip $1),\%.o), deps, $(call anrem-current-path)/.deps)\
+$(call anrem-optarg,$(strip $1),\%.o): $(call anrem-optarg,$(strip $2),\%.c)
+endef
+
+
+define anrem-def-default-auto-target-2 =
+$(call anrem-hook-auto-target-command, \
+	$(call anrem-optarg,$(strip $1),\%.o),\
+	$(call anrem-optarg,$(strip $2),\%.c)\
+)
 endef

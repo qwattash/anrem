@@ -37,6 +37,19 @@ NULL :=
 # space variable useful in some cases
 SPACE := $(NULL) $(NULL)
 
+# formatting helpers
+define NEWLINE :=
+
+
+endef
+
+# Hi emacs user! Emacs makefile-mode will complain about the following
+# lines, if you change this YOU are responsible for your misery.
+# Don't say I didn't warn you.
+define TAB :=
+	
+endef
+
 # booleans
 TRUE := T
 FALSE := $(NULL)

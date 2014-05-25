@@ -29,6 +29,11 @@ include $(ANREM_COMPONENTS)/config.mk
 include $(ANREM_COMPONENTS)/env.mk
 
 #
+# ANREM hooks
+#
+include $(ANREM_COMPONENTS)/hooks.mk
+
+#
 # ANREM functions
 #
 include $(ANREM_COMPONENTS)/functions.mk

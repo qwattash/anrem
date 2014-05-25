@@ -3,4 +3,5 @@
 
 const char* hello = "Hello World";
 const int a = 20;
+const int b = 200;
 #endif

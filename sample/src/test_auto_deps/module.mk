@@ -16,10 +16,37 @@ obj := $(CURRENT)/hello.o
 $(call anrem-build, $(tgts)): $(obj)
 	$(CC) -o $@ $^
 
-$(info $(call anrem-auto-target, %.o, %.c, $(TRUE),$(obj),$(NULL)))
-#$(call anrem-auto-target)
+
+#%.o: %.c
+#	@echo $(deps)
+#	$(call anrem-def-call-auto-hook)
+#	$(eval $(call anrem-hook-makedepend, $@, $*.d, $<))
+#	gcc -c -o $@ $<
 
 $(call anrem-clean):
 	rm -f $(tgts)
 	rm -f $(obj)
 	rm -f $(path)/.deps/*
+
+
+
+
+#$(call anrem-auto-target, %.o, %.c, $(FALSE),$(obj),$(NULL))
+#	@echo $(deps)
+#	$(CC) -c -o $@ $<
+#$(info $(eval $(call anrem-def-call-auto-hook)))
+#$(info $(call anrem-def-call-auto-hook))
+
+#$(call anrem-def-auto-header,%.o,%.c)
+#	$(call anrem-def-call-auto-hook-dd)
+#	gcc -c -o $@ $<
+
+#$(eval $(call anrem-def-auto-target-dd))
+
+#--------------------- solution 2
+define rule =
+gcc -c -o $$@ $$<
+@echo "pippo"
+endef
+
+$(call anrem-auto-target-2, %.o, %.c, rule)
