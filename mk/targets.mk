@@ -12,4 +12,4 @@ clean: $(ANREM_BUILD_CLEAN)
 
 test: $(ANREM_TEST_TARGETS)
 
-deps_clean: $(ANREM_DEPS_CLEAN)
+depclean: $(ANREM_DEPS_CLEAN)

@@ -26,7 +26,6 @@ $(call anrem-build, $(tgts)): $(obj)
 $(call anrem-clean):
 	rm -f $(tgts)
 	rm -f $(obj)
-	rm -f $(path)/.deps/*
 
 
 

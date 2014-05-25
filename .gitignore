@@ -3,5 +3,5 @@
 \#*#
 .\#*
 *.d
-*.deps
+*.deps*
 *.mkdep
