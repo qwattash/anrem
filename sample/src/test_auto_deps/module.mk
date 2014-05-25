@@ -44,9 +44,17 @@ $(call anrem-clean):
 #$(eval $(call anrem-def-auto-target-dd))
 
 #--------------------- solution 2
-define rule =
-gcc -c -o $$@ $$<
-@echo "pippo"
-endef
+# this is a working one!
 
-$(call anrem-auto-target-2, %.o, %.c, rule)
+#define rule =
+#gcc -c -o $$@ $$<
+#@echo "pippo"
+#endef
+
+#$(call anrem-auto-target-2, %.o, %.c, rule)
+
+#-------------------- solution 3
+
+$(call anrem-auto-target-3, %.o, %.c,$(FALSE),$(NULL),$(NULL))
+	gcc -c -o $@ $<
+	@echo "pippo"

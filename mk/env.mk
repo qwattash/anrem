@@ -2,6 +2,8 @@
 # Environment where the make process is carried on
 #
 
+# ------------------------------------ module inclusion lists and variables
+
 # Top level directory
 ANREM_TOP := $(shell pwd)
 
@@ -15,6 +17,19 @@ $(filter-out $(ANREM_COMPONENTS),\
 )\
 )
 
+# ----------------------------------- MOD variables lists
+
+# stores names of MOD_<module_name> variables that have been exported so far
+# this is used to detect and manage clashes in module vars naming
+MOD_VAR_NAMES := $(NULL)
+
+# this is used along MOD_VAR_NAMES to keep track of modules for which a MOD
+# variable is defined
+EXPORTED_MODULES := $(NULL)
+
+
+# ---------------------------- target lists
+
 #user defined targets list
 ANREM_BUILD_TARGETS :=
 
@@ -25,11 +40,16 @@ DEBUG_TARGETS :=
 #user defined clear list
 ANREM_BUILD_CLEAN :=
 
+# automatic dependencies clean list
+ANREM_DEPS_CLEAN :=
+
 #same as BUILD_CLEAN but for debug stuff
 DEBUG_CLEAN :=
 
 #user defined test targets list
 ANREM_TEST_TARGETS :=
+
+# ------------------------------------ Auxiliary variables
 
 # null variable useful for calling functions with null args
 NULL :=
@@ -54,9 +74,7 @@ endef
 TRUE := T
 FALSE := $(NULL)
 
-# stores names of MOD_<module_name> variables that have been exported so far
-# this is used to detect and manage clashes in module vars naming
-MOD_VAR_NAMES := $(NULL)
-# this is used along MOD_VAR_NAMES to keep track of modules for which a MOD
-# variable is defined
-EXPORTED_MODULES := $(NULL)
+# ------------------------------------- automatic dependencies
+
+# name of the folder in the module where the automatic dependencies are stored
+ANREM_DEPS_DIR := .deps

@@ -4,10 +4,12 @@
 # that should not be defined in the project.mk
 #
 
-.PHONY: $(ANREM_BUILD_CLEAN)
+.PHONY: $(ANREM_BUILD_CLEAN) $(ANREM_DEPS_CLEAN)
 
 all: $(ANREM_BUILD_TARGETS)
 
 clean: $(ANREM_BUILD_CLEAN)
 
 test: $(ANREM_TEST_TARGETS)
+
+deps_clean: $(ANREM_DEPS_CLEAN)

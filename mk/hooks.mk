@@ -15,7 +15,17 @@ define anrem-hook-makedepend =
 gcc -MM -MP -MT $$@ -MF $(deps)/$$*.d $$<
 endef
 
+define anrem-hook-auto-target-command =
+gcc -c -o $$@ $$<
+@echo "auto rule #TODO"
+endef
+
 
 define anrem-hook-makedepend-2 =
+gcc -MM -MP -MT $1 -MF $2 $3
+endef
+
+
+define anrem-hook-makedepend-3 =
 gcc -MM -MP -MT $1 -MF $2 $3
 endef
