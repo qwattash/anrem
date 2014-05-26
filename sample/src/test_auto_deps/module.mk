@@ -11,49 +11,22 @@ CURRENT := $(call anrem-current-path)
 
 tgts := $(CURRENT)/hello
 
-obj := $(CURRENT)/hello.o
+obj1 := $(addprefix $(CURRENT)/, hello.o world.o)
 
-$(call anrem-build, $(tgts)): $(obj)
+obj2 :=  $(addprefix $(CURRENT)/, name.o say.o)
+
+$(call anrem-build, $(tgts)): $(obj1) $(obj2)
 	$(CC) -o $@ $^
-
-
-#%.o: %.c
-#	@echo $(deps)
-#	$(call anrem-def-call-auto-hook)
-#	$(eval $(call anrem-hook-makedepend, $@, $*.d, $<))
-#	gcc -c -o $@ $<
 
 $(call anrem-clean):
 	rm -f $(tgts)
-	rm -f $(obj)
+	rm -f $(obj1)
+	rm -f $(obj2)
 
-
-
-
-#$(call anrem-auto-target, %.o, %.c, $(FALSE),$(obj),$(NULL))
-#	@echo $(deps)
-#	$(CC) -c -o $@ $<
-#$(info $(eval $(call anrem-def-call-auto-hook)))
-#$(info $(call anrem-def-call-auto-hook))
-
-#$(call anrem-def-auto-header,%.o,%.c)
-#	$(call anrem-def-call-auto-hook-dd)
-#	gcc -c -o $@ $<
-
-#$(eval $(call anrem-def-auto-target-dd))
-
-#--------------------- solution 2
-# this is a working one!
-
-#define rule =
-#gcc -c -o $$@ $$<
-#@echo "pippo"
-#endef
-
-#$(call anrem-auto-target-2, %.o, %.c, rule)
-
-#-------------------- solution 3
-
-$(call anrem-auto-target-3, %.o, %.c,$(FALSE),$(NULL),$(NULL))
+$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj1))
 	gcc -c -o $@ $<
-	@echo "pippo"
+	@echo "group1"
+
+$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj2))
+	gcc -c -o $@ $<
+	@echo "group2"

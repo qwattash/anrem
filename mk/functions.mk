@@ -279,6 +279,7 @@ anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(strip $(1)))
 # mad-scientist.net/make/autodep.html
 #
 # WARNING: The automatic dependencies functionalities are gcc/g++ only
+# in the future this may change
 #
 
 #
@@ -326,108 +327,133 @@ anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(strip $(1)))
 # the dependency files creation, deletion and updating.
 # The creation of dependency files is parametrised using a call hook with the following
 # signature:
-##################------------------------------------------------------------------------------------------- Modify hook signature
 # @param name: matched name in the rule (say %.o: %.c matches file.o, the argument value is "file.o")
 # @param dependency_file: where the hook should store the dependency list
 # @param source: source file(s) for which the hook should provide the dependencies
 # anrem-hook-makedepend(name, dependency_file, source)
-#----------------------------------------------------------------------------------------------------------------
 # The hook can be registered using the hook registration system as normal with type "anrem-hook-makedepend"
 # or can be given directly at the time of declaration of the target/rule as an argument
 #
+# The method works by defining a chain pattern rule, suppressing the default target and
+# making some .PRECIOUS intermediate targets.
+# While being somewhat cumbersome, the method has the advantage of being easy to manipulate both
+# inside anrem and from the user point of view, who sees a pretty normal make-style target declaration.
 #
+# 
+# $(call anrem-auto-target, bla) # notice no :
+#	<rule cmds>
 #
+# Now you can define targets with automated deps handling just as any other
+# ANREM target!
+#
+
 # @param [$1]: target pattern (e.g. %.o, which is the default)
 # @param [$2]: source pattern (e.g. %.c, which is the default)
 # @param [$3]: boolean, (True) generate default rule or (False) a custom one is given
 # @param [$4]: scope of the rule, if NULL the scope is global else a target list must be given (see (iii) above)
 # @param [$5]: hook function, if not given the global anrem-hook-makedepend is used
-# TODO anrem-optarg calls are pretty useless here...
-#---------------------------------------------------------------------------------------------- SOLUTION #1
-#
-# WARNING: this is hopelessly (well almost) not working due to the impossibility of evaluating the following
-#
-# $(call anrem-auto-target) #<< define the target header %.x: %.y and add the makedepend command line
-#	@echo "custom command here" # << error, the makedepend part of the rule can not be parsed well
-# the main problem is that all the custom commands will be executed in shell and the makedepend command
-# also will. The problem with this is that $(makedepend) -o $@ $< are not parsed and injected directly in
-# sh. Also it is not possible (for the same reason) to put a function call in there, in practice, the
-# makedepend part should be already filled in, but the pattern nature of the rule makes this impossible.
-
 define anrem-auto-target =
-$(strip \
-	$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))\
-	$(if $(call anrem-optarg,$(strip $4),$(NULL)),\
-		$(strip $4):\
-	)\
-)\
-$(strip \
-	$(call anrem-def-auto-header, \
-		$(call anrem-current-path)/$(strip $1), 
-		$(call anrem-current-path)/$(strip $2)\
-	)\
-)\
-$(NEWLINE)$(TAB)$(strip $(call anrem-def-call-auto-hook, $5))\
-$(if $(call anrem-optarg,$(strip $3),$(NULL)),\
-	$(call anrem-def-default-auto-target, $1, $2)\
-)
-endef
-
-#
-# helper that generates the call to the makedepend hook
-# the call is inserted in the rule that is created
-# @param [$1]: the hook function to be used or NULL
-define anrem-def-call-auto-hook =
-$(if $(call anrem-optarg,$(strip $1),$(NULL)),\
-	$(call $1),\
-	$(call anrem-hook-makedepend)\
-)
-endef
-
-#
-# helper that generates the call to the makedepend hook
-# the call is inserted in the rule that is created
-# @param [$1]: the hook function to be used or NULL
-define anrem-def-call-auto-hook-dd =
-gcc -MM -MP -MT $$@ -MF $$(deps)/$$(lastword $$(subst /, ,$$*)).d $$<
-endef
-
-#
-# helper that generates the rule "header"
-# @param [$1]: rule target pattern
-# @param [$2]: rule source pattern
-#
-define anrem-def-auto-header =
-$(call anrem-target-def-var, $(call anrem-optarg,$(strip $1),\%.o), deps, $(call anrem-current-path)/.deps)\
-$(call anrem-optarg,$(strip $1),\%.o): $(call anrem-optarg,$(strip $2),\%.c)
-endef
-
-define anrem-def-auto-target-dd =
-$(call anrem-def-auto-header, %.o, %.c)
-	$(call anrem-def-call-auto-hook-dd)
-	gcc -c -o $$@ $$<
-endef
-
-#
-# helper that generates the body of the target
-# using a default.
-# default rules are configurable using a hook.
-#
-# @param [$1]: rule target pattern
-# @param [$2]: rule source pattern
-#
-define anrem-def-default-auto-target =
-$(call anrem-hook-auto-target-command, \
+$(eval -include $(wildcard $(call anrem-current-path)/$(ANREM_DEPS_DIR)/*.d))\
+$(eval $(call anrem-def-mkdeps-target, \
 	$(call anrem-optarg,$(strip $1),\%.o),\
-	$(call anrem-optarg,$(strip $2),\%.c)\
+	$(call anrem-optarg,$(strip $2),\%.c),\
+	$5)\
+)\
+$(call anrem-def-auto-target-suppress-implicit, $1, $2)\
+$(call anrem-deps-clean)\
+$(if $(strip $3),\
+	$(eval $(call anrem-def-default-target-rule, $1, $2, $4)),\
+	$(call anrem-def-custom-target-rule, \
+		$(call anrem-optarg,$(strip $1),\%.o),\
+		$(call anrem-optarg,$(strip $2),\%.c),\
+		$4\
+	)\
 )
 endef
 
-# ----------------------------------------------------------------------------------------------- SOLUTION #2
-# this is a working one
+#
+# suppress automatic target for the given pattern
+# @param $1: target pattern
+# @param $2: source pattern
+define anrem-def-auto-target-suppress-implicit =
+$(eval $(strip $1): $(strip $2))
+endef
+
+
+# rule that will be eval'ed to define the %.mkdeps chain target
+# %.mkdeps: %.c
+#	gcc -MM -MP -MT $*.o -MF $*.d.tmp $< # this is parametrized by the hook
+#	sed -e "s/$*\.o:\(.*$$\)/&\\n$*\.mkdep:\1/" < $*.d.tmp > $*.d # some magic
+#	@touch $*.mkdep	# touch the intermediate target
+#
+# The magic part basically duplicates the <something>.o rule to make the <something>.mkdeps
+# depend on the same files too, so that the dependencies are also remade if one of those changes
+# This also adds the .PRECIOUS %.mkdeps
+#
+#
+# @param $1: target pattern
+# @param $2: source pattern
+# @param $3: the hook function to be used or NULL
+define anrem-def-mkdeps-target =
+.PRECIOUS: $(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep
+$(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep: $(call anrem-current-path)/$(strip $2)
+	@mkdir -p $(call anrem-current-path)/$(ANREM_DEPS_DIR)
+	$(if $(strip $3),\
+		$$(call $3, \
+			$$(patsubst $(strip $2),$(strip $1),$$<),\
+			$(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp,\
+			$$<\
+		),\
+		$$(call anrem-hook-makedepend, \
+			$$(patsubst $(strip $2),$(strip $1),$$<),\
+			$(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp,\
+			$$<\
+		)\
+	)
+	awk '{if (sub(/[ \t]*\\$$$$/," ")) { printf "%s", $$$$0} else { sub(/^[ \t]*/,""); print $$$$0}}' \
+		< $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp | \
+	sed -e "s@\($(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$*\)\.o:\(.*\$$$$\)@&\\n\1.mkdep:\2@" \
+		> $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d
+	@touch $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).mkdep
+	@rm $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp
+endef
+
+# generate the default rule for the given pattern
+# this uses a hook to enable the user to specify
+# globally the default target for a pattern.
+# Define the header like that
+# [$(objects):] %.o: %.c %.mkdep
+# @param $1: target pattern
+# @param $2: source pattern
+# @param $3: scope of the rule -> NULL or list of targets
+define anrem-def-default-target-rule =
+$(if $(strip $3), $(strip $3):) \
+	$(call anrem-current-path)/$(strip $1): \
+	$(call anrem-current-path)/$(strip $2) $(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep
+	$(call anrem-hook-auto-target-rule)
+endef
 
 #
-# In an attempt to overcome limitations of solution #1, here the target is not printed to the makefile!
+# Declare the rule header for the command to come from the user
+#
+# @param $1: target pattern
+# @param $2: source pattern
+# @param $3: scope of the rule -> NULL or list of targets
+define anrem-def-custom-target-rule =
+$(if $(strip $3), $(strip $3):) \
+	$(call anrem-current-path)/$(strip $1): \
+	$(call anrem-current-path)/$(strip $2) $(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep
+endef
+
+
+
+
+#############################################################################
+# ----------------------------------------------------------------------------------------------- SOLUTION n2
+# alternate solution is left for benchmarking
+
+#
+# Here the target is not printed to the makefile!
 # It is instead parsed through an $(eval) so that any variable could be registered properly as normal.
 # An advantage is that the makedepend hook interface is cleaner since its output don't have to contain
 # directly the $<whatever> automatic variables since it is injected in the rule throgh a function that
@@ -512,125 +538,4 @@ $(call anrem-hook-auto-target-command, \
 	$(call anrem-optarg,$(strip $1),\%.o),\
 	$(call anrem-optarg,$(strip $2),\%.c)\
 )
-endef
-
-# ----------------------------------------------------------------------------------------------- SOLUTION #3
-# obviously this is working
-
-#
-# This brings us to the third solution, this shares the basic structure of the previous methods 
-# while gratly changing the underlying logic.
-# The method works by defining a chain pattern rule, suppressing the default target and
-# using some .PRECIOUSness and touching intermediate targets.
-# While being somewhat cumbersome, the method has the advantage of being easy to manipulate both
-# inside anrem and from the user point of view, who sees a pretty normal make-style target declaration.
-#
-# 
-# $(call anrem-auto-target-3, bla) # notice no :
-#	<rule cmds>
-#
-# Coooool, isn't it? Now you can define targets with automated deps handling just as any other
-# ANREM target!
-#
-
-# TODO remember to add the .deps clean target to anrem!
-# TODO fields 3 and 4 merge into one!!
-# @param [$1]: target pattern (e.g. %.o, which is the default)
-# @param [$2]: source pattern (e.g. %.c, which is the default)
-# @param [$3]: boolean, (True) generate default rule or (False) a custom one is given
-# @param [$4]: scope of the rule, if NULL the scope is global else a target list must be given (see (iii) above)
-# @param [$5]: hook function, if not given the global anrem-hook-makedepend is used
-define anrem-auto-target-3 =
-$(eval -include $(wildcard $(call anrem-current-path)/$(ANREM_DEPS_DIR)/*.d))\
-$(eval $(call anrem-def-mkdeps-target-3, \
-	$(call anrem-optarg,$(strip $1),\%.o),\
-	$(call anrem-optarg,$(strip $2),\%.c),\
-	$5)\
-)\
-$(call anrem-def-auto-target-suppress-implicit-3, $1, $2)\
-$(call anrem-deps-clean)\
-$(if $(strip $3),\
-	$(eval $(call anrem-def-default-target-rule-3, $1, $2, $4)),\
-	$(call anrem-def-custom-target-rule-3, \
-		$(call anrem-optarg,$(strip $1),\%.o),\
-		$(call anrem-optarg,$(strip $2),\%.c),\
-		$4\
-	)\
-)
-endef
-
-#
-# suppress automatic target for the given pattern
-# @param $1: target pattern
-# @param $2: source pattern
-define anrem-def-auto-target-suppress-implicit-3 =
-$(eval $(strip $1): $(strip $2))
-endef
-
-# TODO is the eval of this really needed? this is independent from
-# the module, however it is parametric on the %.c part
-# --
-# rule that will be eval'ed to define the %.mkdeps chain target
-# %.mkdeps: %.c
-#	gcc -MM -MP -MT $*.o -MF $*.d.tmp $< # this is parametrized by the hook
-#	sed -e "s/$*\.o:\(.*$$\)/&\\n$*\.mkdep:\1/" < $*.d.tmp > $*.d # some magic
-#	@touch $*.mkdep	# touch the intermediate target
-#
-# The magic part basically duplicates the <something>.o rule to make the <something>.mkdeps
-# depend on the same files too, so that the dependencies are also remade if one of those changes
-# This also adds the .PRECIOUS %.mkdeps
-#
-#
-# @param $1: target pattern
-# @param $2: source pattern
-# @param $3: the hook function to be used or NULL
-define anrem-def-mkdeps-target-3 =
-.PRECIOUS: $(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep
-$(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep: $(call anrem-current-path)/$(strip $2)
-	@mkdir -p $(call anrem-current-path)/$(ANREM_DEPS_DIR)
-	$(if $(strip $3),\
-		$$(call $3, \
-			$$(patsubst $(strip $2),$(strip $1),$$<),\
-			$(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp,\
-			$$<\
-		),\
-		$$(call anrem-hook-makedepend-3, \
-			$$(patsubst $(strip $2),$(strip $1),$$<),\
-			$(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp,\
-			$$<\
-		)\
-	)
-	awk '{if (sub(/[ \t]*\\$$$$/," ")) { printf "%s", $$$$0} else { sub(/^[ \t]*/,""); print $$$$0}}' \
-		< $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp | \
-	sed -e "s@\($(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$*\)\.o:\(.*\$$$$\)@&\\n\1.mkdep:\2@" \
-		> $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d
-	@touch $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).mkdep
-	@rm $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp
-endef
-
-# generate the default rule for the given pattern
-# this uses a hook to enable the user to specify
-# globally the default target for a pattern.
-# Define the header like that
-# [$(objects):] %.o: %.c %.mkdep
-# @param $1: target pattern
-# @param $2: source pattern
-# @param $3: scope of the rule -> NULL or list of targets
-define anrem-def-default-target-rule-3 =
-$(if $(strip $3), $(strip $3):) \
-	$(call anrem-current-path)/$(strip $1): \
-	$(call anrem-current-path)/$(strip $2) $(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep
-	gcc -c -o $$@ $$<
-endef
-
-#
-# Declare the rule header for the command to come from the user
-#
-# @param $1: target pattern
-# @param $2: source pattern
-# @param $3: scope of the rule -> NULL or list of targets
-define anrem-def-custom-target-rule-3 =
-$(if $(strip $3), $(strip $3):) \
-	$(call anrem-current-path)/$(strip $1): \
-	$(call anrem-current-path)/$(strip $2) $(call anrem-current-path)/$(ANREM_DEPS_DIR)/%.mkdep
 endef
