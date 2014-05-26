@@ -17,6 +17,9 @@ $(filter-out $(ANREM_COMPONENTS),\
 )\
 )
 
+# this is used to signal the end of module inclusion
+ANREM_MODULE_END := __anrem_end_of_module_inclusion
+
 # ----------------------------------- MOD variables lists
 
 # stores names of MOD_<module_name> variables that have been exported so far

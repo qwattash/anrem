@@ -29,8 +29,15 @@ endef
 #
 # include given modules, this function MUST be used to include
 # the project modules
+# at the end the variable is set to a known value indicating that
+# inclusion have finished
 # @param $1 list of modules to be included
-anrem-include-modules = $(foreach ANREM_CURRENT_MODULE,$(1),$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk))))
+define anrem-include-modules = 
+$(foreach ANREM_CURRENT_MODULE,$(1),\
+	$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk)))\
+)\
+$(eval ANREM_CURRENT_MODULE := $(ANREM_MODULE_END))
+endef
 
 #
 # retrieve the current path of the module
@@ -247,10 +254,22 @@ endef
 
 #
 # Local variables utility, this can be used to declare and access
-# local variables
+# local variables, this works inside the target rules too
 # @param $1 symbol name
 #
-anrem-local = $(strip $1_$(call anrem-current-path))
+define anrem-local = 
+$(strip $1_$(strip $(call anrem-local-get-suffix)))
+endef
+
+#
+# Helper for anrem-local, gives the current path
+# from both inside a target rule and outside.
+define anrem-local-get-suffix =
+$(if $(filter $(ANREM_MODULE_END),$(call anrem-current-path)),
+	$(path),\
+	$(call anrem-current-path)\
+)
+endef
 
 #
 # Local variables utility, store the given value in given local var
