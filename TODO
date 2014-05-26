@@ -1,2 +1,3 @@
-Investigate implementation of default and automatic targets such as *.o: *.c
-Investigate implementation of automatic .h dependencies generation with gxx
+Implement issue #1
+Investigate feasibility of changing the anrem interface of target definition
+Investigate improvements on the automatic dependencies system
