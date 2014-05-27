@@ -482,7 +482,12 @@ define anrem-target-group-add =
 $(eval \
 	$(call anrem-target-group-build-name, $1): $(strip $2)\
 )\
-$(eval GROUP_$(call anrem-target-group-build-name, $1) += $(strip $2))
+$(eval GROUP_ITEMS_$(call anrem-target-group-build-name, $1) += $(strip $2))\
+$(eval GROUP_MODULES_$(call anrem-target-group-build-name, $1) := \
+	$(sort \
+		$(GROUP_MODULES_$(call anrem-target-group-build-name, $1)) $(call anrem-current-path)\
+	)\
+)
 endef
 
 #
@@ -498,6 +503,15 @@ endef
 # get target group members
 # @param $1: group ID
 define anrem-target-group-members =
-$(GROUP_$(call anrem-target-group-build-name, $1))
+$(GROUP_ITEMS_$(call anrem-target-group-build-name, $1))
+endef
+
+#
+# get modules that have members in the group
+# this is useful to group header files and
+# build -I flags
+# @param $1: group ID
+define anrem-target-group-modules =
+$(GROUP_MODULES_$(call anrem-target-group-build-name, $1))
 endef
 

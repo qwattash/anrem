@@ -17,7 +17,8 @@ $(call anrem-build, $(call anrem-local-get, build_target)): $(CURRENT)/hello.o $
 	$(CC) -o $@ $< $(call anrem-target-group-members, build_group)
 
 $(call anrem-target, $(CURRENT)/hello.o): $(CURRENT)/hello.c
-	$(CC) -c -o $@ -I $(MOD_subscriber1) -I $(MOD_subscriber2) $<
+	$(CC) -c -o $@ $(addprefix -I ,$(call anrem-target-group-modules, build_group)) $<
 
 $(call anrem-clean):
 	rm -f $(call anrem-local-get, build_target)
+	rm -f $(path)/*.o
