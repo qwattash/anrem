@@ -383,22 +383,7 @@ endef
 
 # rule that will be eval'ed to define the %.mkdeps chain target
 # %.mkdeps: %.c
-#	gcc -MM -MP -MT $*.o -MF $*.d.tmp $< # this is parametrized by the hook
-#	sed -e "s/$*\.o:\(.*$$\)/&\\n$*\.mkdep:\1/" < $*.d.tmp > $*.d # some magic
-#	@touch $*.mkdep	# touch the intermediate target
-#
-# The magic part basically duplicates the <something>.o rule to make the <something>.mkdeps
-# depend on the same files too, so that the dependencies are also remade if one of those changes
-# This also adds the .PRECIOUS %.mkdeps
-#------------------------------
-#	awk '{if (sub(/[ \t]*\\$$$$/," ")) { printf "%s", $$$$0} else { sub(/^[ \t]*/,""); print $$$$0}}' \
-#		< $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp | \
-#	sed -e "s@\($(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$*\)\.o:\(.*\$$$$\)@&\\n\1.mkdep:\2@" \
-#		> $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d
-#	@touch $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).mkdep
-#	@rm $(call anrem-current-path)/$(ANREM_DEPS_DIR)/$$(lastword $$(subst /, ,$$*)).d.tmp
-#
-#--------------------
+#	gcc -MM -MP -MT $*.o -MF $*.d $< # this is parametrized by the hook
 #
 # @param $1: target pattern
 # @param $2: source pattern
@@ -436,7 +421,7 @@ define anrem-def-default-target-rule =
 $(if $(strip $3), $(strip $3):) \
 	$(call anrem-current-path)/$(strip $1): \
 	$(call anrem-current-path)/$(strip $2) $(call anrem-current-path)/%.mkdep
-	$(call anrem-hook-auto-target-rule)
+	$(call anrem-hook-auto-target-rule, $(strip $1), $(strip $2))
 endef
 
 #
