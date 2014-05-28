@@ -16,6 +16,7 @@ ANREM_COMPONENTS := mk
 #default target is all, needed because all has to be defined
 #after all inclusions and otherwise the first included target
 #would be run on a param-less make call
+#.DEFAULT: all
 predefined: all
 
 #

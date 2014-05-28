@@ -13,6 +13,7 @@
 # @param $3: source file(s) for which the hook should provide the dependencies
 
 define anrem-hook-makedepend =
+$(info MT $1 MF $2 TGT $3)\
 gcc -MM -MP -MT $1 -MF $2 $3
 endef
 
