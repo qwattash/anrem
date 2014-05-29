@@ -4,8 +4,8 @@
 # and provide example use cases for which ANREM has been designed.
 #
 
-# get current module path, this can be used later for a number of
-# purposes
+## get current module path, this can be used later for a number of
+## purposes
 CURRENT := $(call anrem-current-path)
 
 
