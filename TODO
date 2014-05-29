@@ -1,3 +1,8 @@
-Implement issue #1
 Investigate feasibility of changing the anrem interface of target definition
-Investigate improvements on the automatic dependencies system
+Create function alias file to rename functions transparently
+Create diagnostics and helper shell script, is it needed?
+*** planned testing phase
+Investigate different project setups and workflows that may need some helpers
+Try to improve testing support
+Build/deploy system to automate package creation
+Support for other languages
