@@ -1,5 +1,4 @@
 Investigate feasibility of changing the anrem interface of target definition
-Create diagnostics and helper shell script, is it needed?
 *** planned testing phase
 Investigate different project setups and workflows that may need some helpers
 Try to improve testing support
