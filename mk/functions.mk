@@ -156,7 +156,7 @@ anrem-mod-exclude = $(eval EXPORTED_MODULES += $1)
 define anrem-build =
 $(strip \
 $(call anrem-target, $1)\
-$(eval ANREM_BUILD_TARGETS += $(strip $1))\
+$(call anrem-build-list-add, $1)\
 )
 endef
 #
@@ -168,7 +168,7 @@ endef
 define anrem-clean = 
 $(strip \
 	$(call anrem-target, $(call anrem-optarg,$1,clean_$(call anrem-current-path)))\
-	$(eval ANREM_BUILD_CLEAN += $(strip $(call anrem-optarg,$1,clean_$(call anrem-current-path))))\
+	$(call anrem-clean-list-add, $(call anrem-optarg,$1,clean_$(call anrem-current-path)))\
 )
 endef
 
@@ -180,7 +180,7 @@ endef
 define anrem-test = 
 $(strip \
 	$(call anrem-target, $(call anrem-optarg,$1,test_$(call anrem-current-path)))\
-	$(eval ANREM_TEST_TARGETS += $(strip $(call anrem-optarg,$1,test_$(call anrem-current-path))))\
+	$(call anrem-test-list-add, $(call anrem-optarg,$1,test_$(call anrem-current-path)))\
 )
 endef
 
@@ -215,6 +215,27 @@ endef
 # @param $1 target absolute name
 #
 anrem-target = $(strip $1)$(call anrem-target-def-var,$(strip $1), path,$(strip $(call anrem-current-path)))
+
+
+#
+# add given target to the build list 
+# @param $1: target name
+define anrem-build-list-add = 
+$(eval ANREM_BUILD_TARGETS += $(strip $1))
+endef
+#
+# add given target to the clean list 
+# @param $1: target name
+define anrem-clean-list-add =
+$(eval ANREM_BUILD_CLEAN += $(strip $1))
+endef
+
+#
+# add given target to the test list 
+# @param $1: target name
+define anrem-test-list-add =
+$(eval ANREM_TEST_TARGETS += $(strip $1))
+endef
 
 ############################################# target local variables
 
