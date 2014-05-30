@@ -40,6 +40,11 @@ include $(ANREM_COMPONENTS)/hooks.mk
 include $(ANREM_COMPONENTS)/functions.mk
 
 #
+# ANREM function aliases
+#
+include $(ANREM_COMPONENTS)/alias.mk
+
+#
 # include top level project definition
 #
 include $(ANREM_TOP)/project.mk

@@ -8,7 +8,7 @@
 # substitutes optional argument with given default if no argumen is given
 # @param $1 optarg content
 # @param $2 default
-anrem-optarg = $(strip $(if $(1),$(1),$(2)))
+anrem-optarg = $(strip $(if $(strip $1),$1,$2))
 
 #
 # reverse a list
