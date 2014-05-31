@@ -20,11 +20,6 @@ ANREM_COMPONENTS := mk
 predefined: all
 
 #
-# include configuration
-#
-include $(ANREM_COMPONENTS)/config.mk
-
-#
 # include environment
 #
 include $(ANREM_COMPONENTS)/env.mk

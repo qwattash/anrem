@@ -30,3 +30,17 @@
 # 	declaration system (just like anrem-exclude-modx)
 # "*.mk": everything not starting with a "_" and not named "module.mk" is treated as a custom name
 #	to use (just like in anrem-def-modx)
+
+## Compilers flags can also be defined here
+
+#architecture
+ARCH := 
+
+#toolchain
+CC := gcc
+LD := ld
+
+#toolchain options
+CFLAGS := $(NULL)
+LDFLAGS := $(NULL)
+
