@@ -1,6 +1,7 @@
 #ifndef _AUTO_DEPS_HELLO
 #define _AUTO_DEPS_HELLO
 
+//other comment
 //some damn comment
 
 void world();

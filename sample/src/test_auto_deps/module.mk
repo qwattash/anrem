@@ -23,10 +23,20 @@ $(call anrem-clean):
 	rm -f $(obj1)
 	rm -f $(obj2)
 
-$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj1))
-	gcc -c -o $@ $<
-	@echo "group1"
+#$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj1))
+#	gcc -c -o $@ $<
+#	@echo "group1"
 
-$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj2))
+#$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj2))
+#	gcc -c -o $@ $<
+#	@echo "group2"
+
+$(call anrem-target, $(obj2)): %.o: %.c
+	$(call anrem-mkdeps, $@, $<)
 	gcc -c -o $@ $<
-	@echo "group2"
+	@echo "solution 3 grp 2"
+
+$(call anrem-target, $(obj1)): %.o: %.c
+	$(call anrem-mkdeps, $@, $<)
+	gcc -c -o $@ $<
+	@echo "solution 3 grp 1"
