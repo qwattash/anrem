@@ -30,7 +30,12 @@ endef
 # include given modules, this function MUST be used to include
 # the project modules
 # @param $1 list of modules to be included
-anrem-include-modules = $(foreach ANREM_CURRENT_MODULE,$(1),$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk))))
+define anrem-include-modules = 
+	$(foreach ANREM_CURRENT_MODULE,$(1),\
+		$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk)))\
+		$(eval -include $(wildcard $(ANREM_CURRENT_MODULE)/$(ANREM_DEPS_DIR)/*.d))\
+	)
+endef
 
 #
 # retrieve the current path of the module
@@ -178,29 +183,6 @@ $(strip \
 endef
 
 #
-# add target that cleans the automatic dependencies
-# in <module>.deps, this also generates the target if not already present
-# since the cleaning process is the same for all modules
-#
-define anrem-deps-clean =
-$(strip \
-	$(if $(filter deps_clean_$(call anrem-current-path),$(ANREM_DEPS_CLEAN)),,\
-		$(eval ANREM_DEPS_CLEAN += deps_clean_$(call anrem-current-path))\
-		$(eval $(call anrem-deps-clean-rule))
-	)\
-)
-endef
-
-#
-# helper rule used in anrem-deps-clean
-#
-define anrem-deps-clean-rule =
-deps_clean_$(call anrem-current-path):
-	rm -rf $(call anrem-current-path)/$(ANREM_DEPS_DIR)
-endef
-
-
-#
 # declare a target in the current module path.
 # This does not add the target to any anrem target list.
 # A target-local variable "path" is created to hold the path of the module
@@ -343,93 +325,4 @@ define anrem-mkdeps =
 		$(path)/$(ANREM_DEPS_DIR)/$(subst $(dir $1),$(NULL),$(basename $1)).d,\
 		$(strip $2)\
 	)
-endef
-
-
-##############################################################################
-# alternate automatic dependencies solution
-#
-# Here the target is not printed to the makefile!
-# It is instead parsed through an $(eval) so that any variable could be registered properly as normal.
-# The advantage is that the user don't have to call anrem-mkdeps and the patters are restricted
-# to the module path automatically.
-# Also the target is built automatically in a safe format.
-# The main drawback is that the definition of the rule is less clean and mostly differ from the standard
-# make rule syntax.
-# An example follows:
-#
-# define my_rule =
-# gcc -c -o $$@ $$<
-# @echo "my custom rule"
-# endef
-#
-# $(call anrem-auto-target, %.o, %.c, my_rule, $(NULL))
-#
-# notice that there is absolutely (afaik) no way to automate the definition
-# of the macro header of the "rule" macro such that it looks like:
-#
-# $(call def-rule) =
-# <rule cmd>
-# <rule cmd>
-# $(call end-rule)
-
-#
-# The target definition function, this is the one that calls eval and creates the target
-#
-# @param $1: target pattern (e.g. %.o, which is the default)
-# @param $2: source pattern (e.g. %.c, which is the default)
-# @param $3: rule to be used, the variable name that contains the rule
-# @param [$4]: scope of the rule (objects to be considered in the pattern matching), or NULL
-define anrem-auto-target =
-$(eval -include $(wildcard $(call anrem-current-path)/.deps/*.d))\
-$(eval $(call anrem-def-auto-target-2, $1, $2, $3, $4, $5, $6))
-endef
-
-
-# rule that will be eval'ed
-define anrem-def-auto-target =
-$(if $(call anrem-optarg,$(strip $5),$(NULL)),\
-		$(strip $5):\
-)\
-$(strip \
-	$(call anrem-def-auto-header-2, \
-		$(call anrem-current-path)/$(strip $1), 
-		$(call anrem-current-path)/$(strip $2)\
-	)\
-)
-	$(strip $(call anrem-def-call-auto-hook-2, $6))
-	$(if $(call anrem-optarg,$(strip $4),$(NULL)),\
-		$(call anrem-def-default-auto-target-2, $1, $2),\
-		$(subst $(NEWLINE),$(NEWLINE)$(TAB),$($(strip $3)))\
-	)
-endef
-
-#
-# helper that generates the call to the makedepend hook
-# the call is inserted in the rule that is created
-# @param [$1]: the hook function to be used or NULL
-define anrem-def-call-auto-hook =
-$(if $(call anrem-optarg,$(strip $1),$(NULL)),\
-	$$(call $1, $$@, $(call anrem-current-path)/.deps/$$(lastword $$(subst /, ,$$*)).d, $$<),\
-	$$(call anrem-hook-makedepend-2, $$@, $(call anrem-current-path)/.deps/$$(lastword $$(subst /, ,$$*)).d, $$<)\
-)
-endef
-
-#
-# helper that generates the rule "header"
-# @param [$1]: rule target pattern
-# @param [$2]: rule source pattern
-#
-define anrem-def-auto-header =
-$(call anrem-target-def-var, $(call anrem-optarg,$(strip $1),\%.o), deps, $(call anrem-current-path)/.deps)\
-$(call anrem-optarg,$(strip $1),\%.o): $(call anrem-optarg,$(strip $2),\%.c)
-endef
-
-
-define anrem-def-default-auto-target =
-$(info "default-auto target command TODO, better user hook interface")\
-$(call anrem-hook-auto-target-command, \
-	$(call anrem-optarg,$(strip $1),\%.o),\
-	$(call anrem-optarg,$(strip $2),\%.c)\
-)
 endef

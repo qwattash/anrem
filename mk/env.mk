@@ -40,9 +40,6 @@ DEBUG_TARGETS :=
 #user defined clear list
 ANREM_BUILD_CLEAN :=
 
-# automatic dependencies clean list
-ANREM_DEPS_CLEAN :=
-
 #same as BUILD_CLEAN but for debug stuff
 DEBUG_CLEAN :=
 
