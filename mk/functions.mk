@@ -156,8 +156,8 @@ anrem-mod-exclude = $(eval EXPORTED_MODULES += $1)
 #
 define anrem-build =
 $(strip \
-$(call anrem-target, $1)\
-$(call anrem-build-list-add, $1)\
+$(call anrem-target, $(call anrem-expand-local, $1))\
+$(call anrem-build-list-add, $(call anrem-expand-local, $1))\
 )
 endef
 #
@@ -168,8 +168,8 @@ endef
 #
 define anrem-clean = 
 $(strip \
-	$(call anrem-target, $(call anrem-optarg,$1,clean_$(call anrem-current-path)))\
-	$(call anrem-clean-list-add, $(call anrem-optarg,$1,clean_$(call anrem-current-path)))\
+	$(call anrem-target, $(call anrem-optarg,$(call anrem-expand-local, $1),clean_$(call anrem-current-path)))\
+	$(call anrem-clean-list-add, $(call anrem-optarg,$(call anrem-expand-local, $1),clean_$(call anrem-current-path)))\
 )
 endef
 
@@ -180,8 +180,8 @@ endef
 #
 define anrem-test = 
 $(strip \
-	$(call anrem-target, $(call anrem-optarg,$1,test_$(call anrem-current-path)))\
-	$(call anrem-test-list-add, $(call anrem-optarg,$1,test_$(call anrem-current-path)))\
+	$(call anrem-target, $(call anrem-optarg,$(call anrem-expand-local, $1),test_$(call anrem-current-path)))\
+	$(call anrem-test-list-add, $(call anrem-optarg,$(call anrem-expand-local, $1),test_$(call anrem-current-path)))\
 )
 endef
 
@@ -192,27 +192,33 @@ endef
 # inside the target.
 # @param $1 target absolute name
 #
-anrem-target = $(strip $1)$(call anrem-target-def-var,$(strip $1), path,$(strip $(call anrem-current-path)))
-
+define anrem-target = 
+$(call anrem-expand-local, $1)\
+$(call anrem-target-def-var,\
+	$(call anrem-expand-local, $1), \
+	path,\
+	$(strip $(call anrem-current-path))\
+)
+endef
 
 #
 # add given target to the build list 
 # @param $1: target name
 define anrem-build-list-add = 
-$(eval ANREM_BUILD_TARGETS += $(strip $1))
+$(eval ANREM_BUILD_TARGETS += $(call anrem-expand-local, $1))
 endef
 #
 # add given target to the clean list 
 # @param $1: target name
 define anrem-clean-list-add =
-$(eval ANREM_BUILD_CLEAN += $(strip $1))
+$(eval ANREM_BUILD_CLEAN += $(call anrem-expand-local, $1))
 endef
 
 #
 # add given target to the test list 
 # @param $1: target name
 define anrem-test-list-add =
-$(eval ANREM_TEST_TARGETS += $(strip $1))
+$(eval ANREM_TEST_TARGETS += $(call anrem-expand-local, $1))
 endef
 
 ############################################# target local variables
@@ -225,7 +231,7 @@ endef
 # @param $2: symbol to be defined
 # @param $3: value of the symbol
 #
-anrem-target-def-var = $(eval $1: $2 := $3)
+anrem-target-def-var = $(eval $(call anrem-expand-local, $1): $(call anrem-expand-local, $2) := $(call anrem-expand-local, $3))
 
 
 ############################################# path handling
@@ -238,8 +244,8 @@ anrem-target-def-var = $(eval $1: $2 := $3)
 #
 define anrem-path-cut = 
 $(strip \
-$(eval anrem-path-cut-pathlist := $(subst /,$(SPACE),$(strip $2)))\
-$(eval anrem-path-cut-filter := $(wordlist 1,$1,$(anrem-path-cut-pathlist)))\
+$(eval anrem-path-cut-pathlist := $(subst /,$(SPACE),$(call anrem-expand-local, $2)))\
+$(eval anrem-path-cut-filter := $(wordlist 1,$(call anrem-expand-local, $1),$(anrem-path-cut-pathlist)))\
 $(foreach anrem-path-cut-iter,$(anrem-path-cut-filter),\
 	$(eval anrem-path-cut-pathlist := $(anrem-path-cut-pathlist)/)\
 	$(eval anrem-path-cut-pathlist := $(patsubst %/,$(NULL),$(anrem-path-cut-pathlist)))\
@@ -249,7 +255,21 @@ $(subst $(SPACE),/,$(strip $(anrem-path-cut-pathlist)))\
 endef
 
 ############################################# local variables
-# TODO fix when the variable is retrived from inside a rule
+
+#
+# Expand a local variable beginning by @, if possible
+# otherwise return the same text given as input
+# such as @mylocalvar
+# @param $1 local variable name or normal text
+#
+define anrem-expand-local = 
+$(strip \
+	$(if $(filter @%,$(strip $1)),\
+		$(call anrem-local-get, $(patsubst @%,%,$(strip $1))),\
+		$(strip $1)
+	)\
+)
+endef
 
 #
 # Local variables utility, this can be used to declare and access
@@ -287,7 +307,7 @@ anrem-local-get = $($(call anrem-local, $1))
 # join relative path with absolute path, safe usage outside make rules
 # @param $1 module-relative path
 # 
-anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(strip $(1)))
+anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(call anrem-expand-local, $1))
 
 
 ######################### automatic dependencies
@@ -357,9 +377,9 @@ anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(strip $(1)))
 define anrem-mkdeps =
 	@mkdir -p $(path)/$(ANREM_DEPS_DIR)
 	$(call anrem-hook-makedepend, \
-		$(strip $1),\
-		$(path)/$(ANREM_DEPS_DIR)/$(subst $(dir $1),$(NULL),$(basename $1)).d,\
-		$(strip $2)\
+		$(strip $(call anrem-expand-local, $1)),\
+		$(path)/$(ANREM_DEPS_DIR)/$(subst $(dir $(call anrem-expand-local, $1)),$(NULL),$(basename $(call anrem-expand-local, $1))).d,\
+		$(strip $(call anrem-expand-local, $2))\
 	)
 endef
 
@@ -379,12 +399,12 @@ endef
 # @param $2: target list
 define anrem-target-group-add = 
 $(eval \
-	$(call anrem-target-group-build-name, $1): $(strip $2)\
+	$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)): $(strip $(call anrem-expand-local, $2))\
 )\
-$(eval GROUP_ITEMS_$(call anrem-target-group-build-name, $1) += $(strip $2))\
-$(eval GROUP_MODULES_$(call anrem-target-group-build-name, $1) := \
+$(eval GROUP_ITEMS_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)) += $(strip $(call anrem-expand-local, $2)))\
+$(eval GROUP_MODULES_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)) := \
 	$(sort \
-		$(GROUP_MODULES_$(call anrem-target-group-build-name, $1)) $(call anrem-current-path)\
+		$(GROUP_MODULES_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1))) $(call anrem-current-path)\
 	)\
 )
 endef
@@ -394,15 +414,15 @@ endef
 # as a dependency from the group
 # @param $1: group ID
 define anrem-target-group-depend =
-$(eval .INTERMEDIATE: $(call anrem-target-group-build-name, $1))\
-$(call anrem-target-group-build-name, $1)
+$(eval .INTERMEDIATE: $(call anrem-target-group-build-name, $(call anrem-expand-local, $1)))\
+$(call anrem-target-group-build-name, $(call anrem-expand-local, $1))
 endef
 
 #
 # get target group members
 # @param $1: group ID
 define anrem-target-group-members =
-$(GROUP_ITEMS_$(call anrem-target-group-build-name, $1))
+$(GROUP_ITEMS_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)))
 endef
 
 #
@@ -411,5 +431,5 @@ endef
 # build -I flags
 # @param $1: group ID
 define anrem-target-group-modules =
-$(GROUP_MODULES_$(call anrem-target-group-build-name, $1))
+$(GROUP_MODULES_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)))
 endef

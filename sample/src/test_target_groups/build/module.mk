@@ -13,7 +13,7 @@ CURRENT := $(call anrem-current-path)
 # is really necessary
 $(call anrem-local-set, build_target, $(addprefix $(CURRENT)/,hello))
 
-$(call anrem-build, $(call anrem-local-get, build_target)): $(CURRENT)/hello.o $(call anrem-target-group-depend, build_group)
+$(call anrem-build, @build_target): $(CURRENT)/hello.o $(call anrem-target-group-depend, build_group)
 	$(CC) -o $@ $< $(call anrem-target-group-members, build_group)
 
 $(call anrem-target, $(CURRENT)/hello.o): $(CURRENT)/hello.c
