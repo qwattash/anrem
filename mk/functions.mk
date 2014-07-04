@@ -373,10 +373,11 @@ anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(call anrem-expand-local, $1)
 #
 # @param $1 target name
 # @param $2 dependency name
+# @param [$3] hook function to call
 #
 define anrem-mkdeps =
 	@mkdir -p $(path)/$(ANREM_DEPS_DIR)
-	$(call anrem-hook-makedepend, \
+	$(call $(call anrem-optarg, $3, anrem-hook-makedepend), \
 		$(strip $(call anrem-expand-local, $1)),\
 		$(path)/$(ANREM_DEPS_DIR)/$(subst $(dir $(call anrem-expand-local, $1)),$(NULL),$(basename $(call anrem-expand-local, $1))).d,\
 		$(strip $(call anrem-expand-local, $2))\

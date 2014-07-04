@@ -36,7 +36,12 @@ $(call anrem-target, $(obj2)): %.o: %.c
 	gcc -c -o $@ $<
 	@echo "solution 3 grp 2"
 
+# custom hook, for signature see anrem-hook-makedepend in mk/hooks.mk
+define some_hook =
+gcc -MM -MP -MT $1 -MF $2 $3
+endef
+
 $(call anrem-target, $(obj1)): %.o: %.c
-	$(call anrem-mkdeps, $@, $<)
+	$(call anrem-mkdeps, $@, $<, some_hook)
 	gcc -c -o $@ $<
 	@echo "solution 3 grp 1"
