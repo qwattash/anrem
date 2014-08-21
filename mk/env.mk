@@ -9,6 +9,11 @@ ANREM_TOP := $(shell pwd)
 
 #list of modules to be traversed during the inclusion phase
 #see http://perldoc.perl.org/perlre.html#Extended-Patterns
+#
+# The regex takes the file paths preceded by a ./ and followed by the end of the line
+# this matches the output format of the directories given by ls -Rl
+#
+#
 ANREM_MODULES := $(strip \
 $(filter-out $(ANREM_COMPONENTS),\
 	$(foreach _MODULE, $(shell ls -Rl | grep -oP "\.[A-Za-z0-9\/_-]*(?=:$$)"),\

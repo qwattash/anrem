@@ -1,9 +1,37 @@
 ########################
-# WARNING 
-# The following are testing helpers used in the testing part
 # 
+# The following are testing helpers used in the testing part
+# this file is loaded upon request by anrem-test-load-helpers
 ########################
+
+#####################
+# support for logging of test output
 #
+
+# log file path
+ANREM_TEST_LOG_FILE = $(NULL)
+
+# set the test log file
+# @param $1 log file, if null logging is disabled 
+#
+define anrem-test-set-log =
+	$(eval ANREM_TEST_LOG_FILE = $(strip $1))
+endef
+
+# this generate the pipe command part that enables logging
+# control using anrem for toggling the logging capability
+#
+# This should be called in test shell commands that should be logged
+# anrem test functions such as assertion do logging on their own
+#
+define anrem-test-log =
+	$(if $(ANREM_TEST_LOG_FILE),\
+		| tee $(ANREM_TEST_LOG_FILE),\
+		$(NULL),
+	)
+endef
+
+#####################
 # Basic output helpers
 #
 anrem-pass = $(info $(shell echo -e "\e[32m[+]$1 -> OK\e[0m"))
@@ -11,6 +39,9 @@ anrem-pass = $(info $(shell echo -e "\e[32m[+]$1 -> OK\e[0m"))
 anrem-fail = $(info $(shell echo -e "\e[31m[-]$1 -> FAIL\e[0m"))
 
 anrem-warn = $(info $(shell echo -e "\e[33m[.]$1\e[0m"))
+
+# this is a variant of anrem warn designed to be called inside test rules
+anrem-msg = @echo -e "\e[33m[.]$1\e[0m"
 
 #
 # Assertions
@@ -31,6 +62,18 @@ anrem-warn = $(info $(shell echo -e "\e[33m[.]$1\e[0m"))
 #
 define anrem-assert-eq = 
 $(if $(shell if [ "$2" = "$3" ]; then echo "1"; fi),\
+	$(call anrem-pass, $1),\
+	$(call anrem-fail, $1)\
+)
+endef
+
+#
+# Same as above but strip whitespaces before evaluating
+# the input.
+# This may be safer than anrem-asser-eq
+#
+define anrem-strip-assert-eq = 
+$(if $(shell if [ $(strip "$2") = $(strip "$3") ]; then echo "1"; fi),\
 	$(call anrem-pass, $1),\
 	$(call anrem-fail, $1)\
 )
@@ -101,29 +144,3 @@ $(if $(shell if [ -e $2 ]; then echo "1"; fi),\
 	$(call anrem-pass, $1)\
 )
 endef
-
-## Include manually the test targets and add them manually to a special target list
-## this make sure that the targets will be run regardless of the correctness of the
-## anrem system functions
-#ANREM_SELF_TEST_TGTS := targets inclusion pathhandling util modvars
-#ANREM_SELF_TEST := $(addprefix tests/, $(addsuffix .test,$(ANREM_SELF_TEST_TGTS)))
-#
-## variable used for module inclusion check
-#__module_inclusion_ack := $(NULL)
-#__module_current_path := $(NULL)
-#
-#$(foreach __item__,$(ANREM_SELF_TEST),\
-#	$(eval -include $(__item__))\
-#)
-#
-## define special target
-#.PHONY: selftest dummy_star
-#
-#dummy_start:
-#	$(call anrem-warn, Selftest started...)
-#
-#selftest: dummy_start $(addprefix test_,$(ANREM_SELF_TEST_TGTS))
-#	$(call anrem-warn, Selftest finished.)
-#
-## override predefined test defined in anrem main makefile
-#predefined: selftest
