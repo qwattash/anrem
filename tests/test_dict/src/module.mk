@@ -53,5 +53,5 @@ $(call anrem-test):
 	@echo "haskey mydict,notfound: $(call anrem-dict-has-key, mydict, notfound)"
 	@echo "in mydict,content2: $(call anrem-dict-in, mydict, content2)"
 	@echo "in mydict,notfound: $(call anrem-dict-in, mydict, notfound)"
-	@echo "keyfor mydict,whatever -> key1: $(call anrem-dict-key-for, mydict, whatever)"
+	@echo "keyfor mydict,whatever -> key1: $(call anrem-dict-key-for1, mydict, whatever)"
 	@echo "END"
