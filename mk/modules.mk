@@ -107,7 +107,7 @@ endef
 define anrem-mod-export = 
 $(foreach _MODULE,$(1),\
 	$(eval anrem-mod-export-mk := $(subst $(SPACE),_,$(word 1,$(wildcard $(_MODULE)/*.mk))))\
-	$(eval anrem-mod-export-name := $(subst $(dir $(anrem-mod-export-mk)),,$(basename $(anrem-mod-export-mk))))\
+	$(eval anrem-mod-export-name := $(call anrem-path-filename, $(anrem-mod-export-mk)))\
 	$(if $(filter module,$(anrem-mod-export-name)),\
 		$(call anrem-mod-var, $(_MODULE))\
 	,\
@@ -128,23 +128,37 @@ endef
 anrem-mod-exclude = $(eval EXPORTED_MODULES += $1)
 
 
-########################### module namespace
+########################### module namespace (subproject handling)
 #
 # this provides transparent isolation for module variable names in all project and subprojects
 #
 
 #
+# Discover projects in the current tree,
+# the projects are stored in a dictionary (see anrem-ns-register)
+# @param $1 list of module directories to check
+#
+define anrem-ns-discover =
+$(foreach anrem-ns-discover-candidate,$1,\
+	$(eval anrem-ns-discover-mk := $(subst $(SPACE),_,$(word 1,$(wildcard $(anrem-ns-discover-candidate)/*.mk))))\
+	$(if $(filter project,$(call anrem-path-filename, $(anrem-ns-discover-mk))),\
+		$(info $(anrem-ns-discover-candidate))\
+		$(call anrem-ns-register, $(anrem-ns-discover-candidate)),\
+		$(NULL)\
+	)\
+)
+endef
+
+#
 # Register a subproject in the tree at a given position
-# The project is registered in the list ANREM_SUBPROJECTS
-# The path for a subproject is stored in a variable build as
-# ANREM_SUBPROJECT_<subproject_name>
-# much like the modules
+# The project is registered in the dictionary ANREM_SUBPROJECTS
 #
 # @param $1 path subproject directory path
 #
-#define anrem-ns-register =
-#	$(eval
-#endef
+define anrem-ns-register =
+$(eval anrem-ns-register-project-name := $(call anrem-path-filename, $1))\
+$(eval ANREM_SUBPROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))
+endef
 
 #
 # Build a namespace name for the given project

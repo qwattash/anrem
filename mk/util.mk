@@ -46,6 +46,17 @@ endef
 # 
 anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(call anrem-expand-local, $1))
 
+################ file name utility
+
+#
+# Given a file path, return the name of the file (without suffix)
+# @param $1 path of the file
+# @returns the file name
+#
+define anrem-path-filename =
+$(subst $(dir $1),$(NULL),$(basename $1))
+endef
+
 ################ Dictionary (associative array)
 
 #
@@ -67,14 +78,16 @@ endef
 # @param $1 dictionary variable name
 # @returns list
 define anrem-dict-keys =
-$(foreach anrem-glob-var,$(.VARIABLES),\
-	$(if $(filter $(strip $1)[%],$(anrem-glob-var)),\
-		$(lastword \
-			$(subst [,$(SPACE), \
-				$(patsubst %],%,$(anrem-glob-var))\
-			)\
-		),\
-		$(NULL)\
+$(strip \
+	$(foreach anrem-glob-var,$(.VARIABLES),\
+		$(if $(filter $(strip $1)[%],$(anrem-glob-var)),\
+			$(lastword \
+				$(subst [,$(SPACE), \
+					$(patsubst %],%,$(anrem-glob-var))\
+				)\
+			),\
+			$(NULL)\
+		)\
 	)\
 )
 endef
@@ -86,10 +99,12 @@ endef
 # @param $1 dictionary variable name
 # @returns list
 define anrem-dict-items =
-$(foreach __anrem-glob-var,$(.VARIABLES),\
-	$(if $(filter $(strip $1)[%],$(__anrem-glob-var)),\
-		$($(__anrem-glob-var)),\
-		$(NULL)\
+$(strip \
+	$(foreach __anrem-glob-var,$(.VARIABLES),\
+		$(if $(filter $(strip $1)[%],$(__anrem-glob-var)),\
+			$($(__anrem-glob-var)),\
+			$(NULL)\
+		)\
 	)\
 )
 endef
