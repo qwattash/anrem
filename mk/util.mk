@@ -45,3 +45,94 @@ endef
 # @param $1 module-relative path
 # 
 anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(call anrem-expand-local, $1))
+
+################ Dictionary (associative array)
+
+#
+# Utility function to issue parametric get to dict
+#
+# @param $1 dictionary variable name
+# @param $2 dictionary key
+# @returns dict[key]
+define anrem-dict-get =
+$(strip \
+	$($(strip $1[$(strip $2)]))
+)
+endef
+
+#
+# Get all dictionary keys
+# The order of the keys is not relevant, do not assume anything.
+#
+# @param $1 dictionary variable name
+# @returns list
+define anrem-dict-keys =
+$(foreach anrem-glob-var,$(.VARIABLES),\
+	$(if $(filter $(strip $1)[%],$(anrem-glob-var)),\
+		$(lastword \
+			$(subst [,$(SPACE), \
+				$(patsubst %],%,$(anrem-glob-var))\
+			)\
+		),\
+		$(NULL)\
+	)\
+)
+endef
+
+#
+# Get all dictionary values
+# The order of the keys is not relevant, do not assume anything.
+#
+# @param $1 dictionary variable name
+# @returns list
+define anrem-dict-items =
+$(foreach __anrem-glob-var,$(.VARIABLES),\
+	$(if $(filter $(strip $1)[%],$(__anrem-glob-var)),\
+		$($(__anrem-glob-var)),\
+		$(NULL)\
+	)\
+)
+endef
+
+#
+# Check if the dictionary has the given key
+# 
+# @param $1 the dict variable name
+# @param $2 the key to be searched
+# @returns $(FALSE) if the key is missing, else return $(TRUE)
+define anrem-dict-has-key =
+$(if $(filter $2,$(call anrem-dict-keys,$1)),\
+	$(TRUE),\
+	$(FALSE)\
+)
+endef
+
+#
+# Check if the dictionary has a given value
+# 
+# @param $1 the dict variable name
+# @param $2 the value to look for
+# @returns $(TRUE) if found, else $(FALSE)
+define anrem-dict-in =
+$(if $(filter $2,$(call anrem-dict-items,$1)),\
+	$(TRUE),\
+	$(FALSE)\
+)
+endef
+
+#
+# Retrun the key for a given content
+# 
+# @param $1 the dict variable name
+# @param $2 the value to look for
+# @returns the key(s) associated to the given value or $(NULL)
+define anrem-dict-key-for =
+$(strip \
+	$(foreach __anrem-dict-key,$(call anrem-dict-keys, $1),\
+		$(if $(filter $2,$(call anrem-dict-get, $1, $(__anrem-dict-key))),\
+			$(__anrem-dict-key),\
+			$(NULL)\
+		)\
+	)\
+)
+endef

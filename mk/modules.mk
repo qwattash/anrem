@@ -5,7 +5,6 @@
 # define the module path variables
 # 
 
-##################################### modules handling
 
 #
 # include given modules, this function MUST be used to include
@@ -127,3 +126,31 @@ endef
 # @param $1 module to be excluded
 #
 anrem-mod-exclude = $(eval EXPORTED_MODULES += $1)
+
+
+########################### module namespace
+#
+# this provides transparent isolation for module variable names in all project and subprojects
+#
+
+#
+# Register a subproject in the tree at a given position
+# The project is registered in the list ANREM_SUBPROJECTS
+# The path for a subproject is stored in a variable build as
+# ANREM_SUBPROJECT_<subproject_name>
+# much like the modules
+#
+# @param $1 path subproject directory path
+#
+#define anrem-ns-register =
+#	$(eval
+#endef
+
+#
+# Build a namespace name for the given project
+# It is assumed
+#
+#
+# @param 
+#
+#define anrem-ns-name =
