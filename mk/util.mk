@@ -2,11 +2,15 @@
 # Utility functions
 #
 
+############## function call utilities
+
 #
 # substitutes optional argument with given default if no argumen is given
 # @param $1 optarg content
 # @param $2 default
 anrem-optarg = $(strip $(if $(strip $1),$1,$2))
+
+############### list utils
 
 #
 # reverse a list
@@ -21,6 +25,8 @@ $(foreach anrem-list-reverse-item,$1,\
 $(anrem-list-reverse-out)\
 )
 endef
+
+############# path operations
 
 #
 # removes the last $1 subdirectories from a path
@@ -46,15 +52,13 @@ endef
 # 
 anrem-join = $(addprefix $(ANREM_CURRENT_MODULE)/,$(call anrem-expand-local, $1))
 
-################ file name utility
-
 #
 # Given a file path, return the name of the file (without suffix)
 # @param $1 path of the file
 # @returns the file name
 #
 define anrem-path-filename =
-$(subst $(dir $1),$(NULL),$(basename $1))
+$(subst $(dir $(abspath $1)),$(NULL),$(basename $(abspath $1)))
 endef
 
 ################ Dictionary (associative array)
@@ -143,9 +147,9 @@ endef
 # @returns the key(s) associated to the given value or $(NULL)
 define anrem-dict-key-for =
 $(strip \
-	$(foreach __anrem-dict-key,$(call anrem-dict-keys, $1),\
-		$(if $(filter $2,$(call anrem-dict-get, $1, $(__anrem-dict-key))),\
-			$(__anrem-dict-key),\
+	$(foreach anrem-dict-key-for-curr,$(call anrem-dict-keys, $1),\
+		$(if $(filter $2,$(call anrem-dict-get, $1, $(anrem-dict-key-for-curr))),\
+			$(anrem-dict-key-for-curr),\
 			$(NULL)\
 		)\
 	)\

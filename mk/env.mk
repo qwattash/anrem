@@ -11,7 +11,7 @@ ANREM_TOP := $(shell pwd)
 #see http://perldoc.perl.org/perlre.html#Extended-Patterns
 ANREM_MODULES := $(strip \
 $(filter-out $(ANREM_COMPONENTS),\
-	$(foreach _MODULE, $(shell ls -Rl | grep -oP "(?<=^\.\/)[A-Za-z0-9\/_-]*(?=:$$)"),\
+	$(foreach _MODULE, $(shell ls -Rl | grep -oP "\.[A-Za-z0-9\/_-]*(?=:$$)"),\
 		$(if $(wildcard $(_MODULE)/*.mk), $(_MODULE))\
 	)\
 )\
@@ -20,16 +20,14 @@ $(filter-out $(ANREM_COMPONENTS),\
 # this is used to signal the end of module inclusion
 ANREM_MODULE_END := __anrem_end_of_module_inclusion
 
-# ----------------------------------- MOD variables lists
+# ----------------------------------- module inclusion lists
 
-# stores names of MOD_<module_name> variables that have been exported so far
-# this is used to detect and manage clashes in module vars naming
-MOD_VAR_NAMES := $(NULL)
-
-# this is used along MOD_VAR_NAMES to keep track of modules for which a MOD
-# variable is defined
-EXPORTED_MODULES := $(NULL)
-
+# these are used to keep track of which paths should or should not
+# be evaluated and the modules that have been imported so far.
+#
+ANREM_EXCLUDE_MODULES := $(NULL)
+ANREM_EXPORTED_MODULES := $(NULL)
+ANREM_IGNORE_PATH := $(NULL)
 
 # ---------------------------- target lists
 
@@ -53,6 +51,9 @@ ANREM_TEST_TARGETS :=
 
 # null variable useful for calling functions with null args
 NULL :=
+
+# nop: do nothing
+NOP := $(NULL)
 
 # space variable useful in some cases
 SPACE := $(NULL) $(NULL)

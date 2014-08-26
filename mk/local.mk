@@ -26,7 +26,7 @@ endef
 # @param $1 symbol name
 #
 define anrem-local = 
-$(strip $(strip $(call anrem-local-get-suffix))_$1)
+$(strip $(strip $1)_$(strip $(call anrem-local-get-suffix)))
 endef
 
 #
