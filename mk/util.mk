@@ -61,6 +61,21 @@ define anrem-path-filename =
 $(subst $(dir $(abspath $1)),$(NULL),$(basename $(abspath $1)))
 endef
 
+#
+# Check if a path is contained within another
+# @param $1 parent path
+# @param $2 path to be tested to see if it is a location within the parent
+# @returns $(TRUE) if the path is in the parent path given, $(FALSE) otherwise
+#
+define anrem-path-is-prefix =
+$(strip \
+	$(if $(patsubst $(strip $1)%,,$(strip $2)),\
+		$(FALSE),\
+		$(TRUE)\
+	)\
+)
+endef
+
 ################ Dictionary (associative array)
 
 #
@@ -120,9 +135,11 @@ endef
 # @param $2 the key to be searched
 # @returns $(FALSE) if the key is missing, else return $(TRUE)
 define anrem-dict-has-key =
-$(if $(filter $2,$(call anrem-dict-keys,$1)),\
-	$(TRUE),\
-	$(FALSE)\
+$(strip \
+	$(if $(filter $2,$(call anrem-dict-keys,$1)),\
+		$(TRUE),\
+		$(FALSE)\
+	)\
 )
 endef
 
@@ -133,9 +150,11 @@ endef
 # @param $2 the value to look for
 # @returns $(TRUE) if found, else $(FALSE)
 define anrem-dict-in =
-$(if $(filter $2,$(call anrem-dict-items,$1)),\
-	$(TRUE),\
-	$(FALSE)\
+$(strip \
+	$(if $(filter $2,$(call anrem-dict-items,$1)),\
+		$(TRUE),\
+		$(FALSE)\
+	)\
 )
 endef
 

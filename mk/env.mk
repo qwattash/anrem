@@ -27,6 +27,10 @@ ANREM_MODULE_END := __anrem_end_of_module_inclusion
 #
 ANREM_EXCLUDE_MODULES := $(NULL)
 ANREM_EXPORTED_MODULES := $(NULL)
+
+#
+# this is used to record the paths to be ignored completely
+#
 ANREM_IGNORE_PATH := $(NULL)
 
 # ---------------------------- target lists

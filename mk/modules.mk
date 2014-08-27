@@ -11,8 +11,11 @@
 # @param $1 a list of paths that are candidate positions for modules
 #
 define anrem-process-modules =
+$(info main:process DISCOVER NS)\
 $(call anrem-ns-discover, $1)\
+$(info main:process DISCOVER MODULES)\
 $(call anrem-mod-discover, $1)\
+$(info main:process INCLUDE)\
 $(call anrem-include-modules, $1)
 endef
 
@@ -39,92 +42,28 @@ endef
 # useful for defining module targets
 anrem-current-path = $(ANREM_CURRENT_MODULE)
 
-######################################################################################################################## old mod var API
-
-#
-# export path of the module to the global variable MOD_<module_name>
-# this is useful when compiling and linking object files and .h from
-# other modules which may move in the code tree
-# This function allows flawless refactoring capabilities at
-# package granularity with absolutely no change in the makefiles as long
-# as the file names and final module names are not changed.
-# As an extension to limit the effect of a changing module name it can be passed
-# the name to use as argument to this function.
-# This function is equivalent to is $MOD_mymodule := $(call anrem-current-path)
-# when no name clashes occur
-# @param $1 module path
-# @param $2 optional name of the module to use
-#
-
-# comments can not be done inside the define so deal with it!
-# Instead I'll give pseudocode, you're welcome..
-#
-# void anrem-def-modx(path, [custom_name=NULL]):
-# if (not path in EXPORTED_MODULES and not path in EXCLUDE_MODULES):
-# 	// if no custom name is given, use the module directory name
-# 	// otherwise use the given custom name
-#	if (custom_name == NULL):
-#		words = path.split('/')
-#		name = words.last()
-# 	else:
-# 		name = custom_name
-#	// module not yet exported, register it
-# 	if (name in MOD_VAR_NAMES):
-#		//conflicting module
-#		rename old conflicting module MOD var to a longer name
-#		use longer name to create MOD var for the current module
-#		set the value for the new module var
-#		add new module var name to MOD_VAR_NAMES
-#		add path to EXPORTED_MODULES
-#	else:
-#		// new module, create MOD variable normally
-#		create MOD var using just the module name
-#		add new module var name to MOD_VAR_NAMES
-#		add path to EXPORTED_MODULES
-# 
-# Secondly get the name of the module into a variable used locally
-# Then check again for the name of the module inside the exported paths
-# if the name is found, this is a problem! Notify the user with a warning and rename both modules' MOD_x var
-# by appending the 
-# else everything ok, export the MOD_x var as normal
-# @refactor
-define anrem-mod-var =
-$(if $(or $(filter $1,$(ANREM_EXCLUDE_MODULES)), $(filter $1,$(ANREM_EXPORTED_MODULES))),\
-	$(NOP)\
-	,\
-	$(eval anrem-def-mod-var-name := $(call anrem-optarg,$(strip $2),$(call anrem-path-filename, $1)))\
-	$(eval ANREM_EXPORTED_MODULES += $1)\
-	$(if $(filter $(anrem-def-mod-var-name),$(MOD_VAR_NAMES)),\
-		$(eval anrem-def-mod-var-duplicate := $(MOD_$(anrem-def-mod-var-name)))\
-		$(warning Found modules with same name: $(strip $1), $(anrem-def-mod-var-duplicate).\
-	 		Conflict has been resolved automatically,\
-			however consider declaring module variables manually as shown in the docs.)\
-		$(eval undefine MOD_$(anrem-def-mod-var-name))\
-		$(eval MOD_VAR_NAMES := $(filter-out $(anrem-def-mod-var-name),$(MOD_VAR_NAMES)))\
-		$(eval anrem-def-mod-var-duplicate-name := $(subst /,_,$(anrem-def-mod-var-duplicate)))\
-		$(eval anrem-def-mod-var-name := $(subst /,_,$1))\
-		$(eval MOD_$(anrem-def-mod-var-name) := $1)\
-		$(eval MOD_$(anrem-def-mod-var-duplicate-name) := $(anrem-def-mod-var-duplicate))\
-		$(eval MOD_VAR_NAMES += $(anrem-def-mod-var-name))\
-		$(eval MOD_VAR_NAMES += $(anrem-def-mod-var-duplicate-name))\
-	,\
-		$(eval MOD_$(anrem-def-mod-var-name) := $1)\
-		$(eval MOD_VAR_NAMES += $(anrem-def-mod-var-name))\
-	)\
-)
-endef
-########################################################################################################################
-
 #
 # given a path, check if that path should be ignored
 # Currently all paths containing a directory mk with a known subproject as parent
-# are ignored
+# are ignored (those are added to the ignore path during project discovery)
 # To make anrem ignore a path prefix the directory name with _
 # @param $1 path to be checked
 # @returns $(TRUE) if the module should be evaluated, 
 # $(FALSE) if the module shall be ignored
-# @todo
 define anrem-mod-check-ignore =
+$(strip \
+	$(info mod:check-ignore checking $(strip $1))\
+	$(eval anrem-mod-check-ignore-result := $(TRUE))\
+	$(foreach anrem-mod-check-ignore-path,$(ANREM_IGNORE_PATH),\
+		$(info mod:check-ignore test against $(anrem-mod-check-ignore-path))\
+		$(if $(call anrem-path-is-prefix, $(anrem-mod-check-ignore-path), $1),\
+			$(eval anrem-mod-check-ignore-result := $(FALSE)),\
+			$(NOP)\
+		)\
+	)\
+	$(info mod:check-ignore answer: -$(anrem-mod-check-ignore-result)-)\
+	$(anrem-mod-check-ignore-result)\
+)
 endef
 
 #
@@ -133,7 +72,7 @@ endef
 # Currently all modules registered with anrem-mod-exclude are not exported,
 # also modules with their .mk file prefixed with '_' are not exported
 #
-# @param $1 path to be checked
+# @param $1 path to the mk of the module to be checked
 # @returns $(TRUE) if the module should be exported, $(FALSE) if not
 #
 define anrem-mod-check-register =
@@ -141,6 +80,7 @@ $(strip \
 	$(if $(or $(filter $(dir $1), $(ANREM_EXPORTED_MODULES)),$(filter $(dir $1), $(ANREM_EXCLUDE_MODULES))),\
 		$(FALSE),\
 		$(if $(filter _%,$(call anrem-path-filename, $1)),\
+			$(call anrem-mod-exclude, $(anrem-mod-discover-module))\
 			$(FALSE),\
 			$(TRUE)
 		)\
@@ -168,12 +108,16 @@ endef
 define anrem-mod-register =
 $(eval anrem-mod-register-name := $(call anrem-optarg,$(strip $2),$(call anrem-path-filename, $1)))\
 $(eval anrem-mod-register-ns-name := $(call anrem-ns-for-path, $1))\
-$(info register $(anrem-mod-register-ns-name)|$(anrem-mod-register-name) => $1)\
+$(info mod:register $(anrem-mod-register-ns-name):$(anrem-mod-register-name))\
 $(if $(strip $(anrem-mod-register-ns-name)),\
-	$(if $(filter $(anrem-mod-register-name),$(ANREM_NS_MODULES[$(anrem-mod-register-ns-name)])),\
+	$(info mod:register state of ns map dict $(call anrem-dict-keys, $(anrem-mod-register-ns-name)))\
+	$(if $(call anrem-dict-has-key, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),\
+		$(info mod:register existing)\
 		$(call anrem-ns-amend-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),\
+		$(info mod:register new)\
 		$(call anrem-ns-add-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name), $1)\
 	),\
+	$(info mod:register invalid ns!)\
 	$(NOP)\
 )
 endef
@@ -194,12 +138,18 @@ define anrem-mod-discover =
 $(foreach anrem-mod-discover-module, $1,\
 	$(eval anrem-mod-discover-mk := $(word 1,$(wildcard $(anrem-mod-discover-module)/*.mk)))\
 	$(eval anrem-mod-discover-name := $(call anrem-path-filename, $(anrem-mod-discover-mk)))\
-	$(if $(call anrem-mod-check-register, $(anrem-mod-discover-mk)),\
-		$(if $(or $(filter module,$(anrem-mod-discover-name)),$(filter project,$(anrem-mod-discover-name))),\
-			$(call anrem-mod-register, $(anrem-mod-discover-module)),\
-			$(call anrem-mod-register, $(anrem-mod-discover-module), $(anrem-mod-discover-name))\
+	$(info mod:discover candidate $(anrem-mod-discover-module) mk $(anrem-mod-discover-mk) name $(anrem-mod-discover-name))\
+	$(if $(call anrem-mod-check-ignore, $(anrem-mod-discover-module)),\
+		$(if $(call anrem-mod-check-register, $(anrem-mod-discover-mk)),\
+			$(if $(or $(filter module,$(anrem-mod-discover-name)),$(filter project,$(anrem-mod-discover-name))),\
+				$(call anrem-mod-register, $(anrem-mod-discover-module)),\
+				$(call anrem-mod-register, $(anrem-mod-discover-module), $(anrem-mod-discover-name))\
+			),\
+			$(info mod:discover rejected in register check)\
+			$(NOP)\
 		),\
-		$(call anrem-mod-exclude, $(anrem-mod-discover-module))\
+		$(info mod:discover ignored)\
+		$(NOP)\
 	)\
 )
 endef
@@ -211,8 +161,17 @@ endef
 # @deprecated
 #
 define anrem-mod-exclude = 
-$(eval ANREM_EXPORTED_MODULES += $1)\
 $(eval ANREM_EXCLUDE_MODULES = $(sort $(ANREM_EXCLUDE_MODULES) $(strip $1)))
+endef
+
+#
+# make anrem inclusion system completely ignore a path
+# this path and subpaths are neither defined as module variables
+# nor imported
+# @param $1 path to ignore
+#
+define anrem-mod-ignore =
+$(eval ANREM_IGNORE_PATH = $(sort $(ANREM_IGNORE_PATH) $(strip $1)))
 endef
 
 
@@ -228,6 +187,7 @@ endef
 #
 define anrem-ns-discover =
 $(foreach anrem-ns-discover-candidate,$(strip $1),\
+	$(info ns:discover candidate $(anrem-ns-discover-candidate))\
 	$(eval anrem-ns-discover-mk := $(word 1,$(wildcard $(anrem-ns-discover-candidate)/*.mk)))\
 	$(if $(filter project,$(call anrem-path-filename, $(anrem-ns-discover-mk))),\
 		$(call anrem-ns-register, $(anrem-ns-discover-candidate)),\
@@ -244,7 +204,10 @@ endef
 #
 define anrem-ns-register =
 $(eval anrem-ns-register-project-name := $(call anrem-path-filename, $1))\
-$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))
+$(info ns:register ANREM_PROJECTS[$(anrem-ns-register-project-name)] = $1)\
+$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
+$(call anrem-mod-ignore, $(strip $1)/mk)\
+$(info ns:register dump ignore paths: $(ANREM_IGNORE_PATH))
 endef
 
 #
@@ -258,12 +221,12 @@ endef
 define anrem-ns-for-path =
 $(eval anrem-ns-for-path-candidate := $(NULL))\
 $(foreach anrem-ns-for-path-item, $(call anrem-dict-items, ANREM_PROJECTS),\
-	$(if $(patsubst $(anrem-ns-for-path-item)%,,$(strip $1)),\
-		$(NOP),\
-		$(if $(patsubst $(ANREM_PROJECTS[$(anrem-ns-for-path-candidate)])%,,$(strip $1)),\
-			$(NOP),\
-			$(eval anrem-ns-for-path-candidate := $(strip $(call anrem-dict-key-for, ANREM_PROJECTS, $(anrem-ns-for-path-item))))\
-		)\
+	$(if $(call anrem-path-is-prefix, $(anrem-ns-for-path-item), $1),\
+		$(if $(call anrem-path-is-prefix, $(ANREM_PROJECTS[$(anrem-ns-for-path-candidate)]), $1),\
+			$(eval anrem-ns-for-path-candidate := $(strip $(call anrem-dict-key-for, ANREM_PROJECTS, $(anrem-ns-for-path-item)))),\
+			$(NOP)\
+		),\
+		$(NOP)\
 	)\
 )\
 $(strip $(anrem-ns-for-path-candidate))
