@@ -100,7 +100,7 @@ endef
 # @returns dict[key]
 define anrem-dict-get =
 $(strip \
-	$($(strip $1[$(strip $2)]))
+	$($(strip $(call anrem-expand-reference, $1))[$(strip $(call anrem-expand-local, $2))])
 )
 endef
 
@@ -113,7 +113,7 @@ endef
 define anrem-dict-keys =
 $(strip \
 	$(foreach anrem-glob-var,$(.VARIABLES),\
-		$(if $(filter $(strip $1)[%],$(anrem-glob-var)),\
+		$(if $(filter $(strip $(call anrem-expand-reference, $1))[%],$(anrem-glob-var)),\
 			$(lastword \
 				$(subst [,$(SPACE), \
 					$(patsubst %],%,$(anrem-glob-var))\
@@ -134,7 +134,7 @@ endef
 define anrem-dict-items =
 $(strip \
 	$(foreach __anrem-glob-var,$(.VARIABLES),\
-		$(if $(filter $(strip $1)[%],$(__anrem-glob-var)),\
+		$(if $(filter $(strip $(call anrem-expand-reference, $1))[%],$(__anrem-glob-var)),\
 			$($(__anrem-glob-var)),\
 			$(NULL)\
 		)\
@@ -150,7 +150,7 @@ endef
 # @returns $(FALSE) if the key is missing, else return $(TRUE)
 define anrem-dict-has-key =
 $(strip \
-	$(if $(filter $2,$(call anrem-dict-keys,$1)),\
+	$(if $(filter $(call anrem-expand-local, $2),$(call anrem-dict-keys,$(call anrem-expand-reference, $1))),\
 		$(TRUE),\
 		$(FALSE)\
 	)\
@@ -165,7 +165,7 @@ endef
 # @returns $(TRUE) if found, else $(FALSE)
 define anrem-dict-in =
 $(strip \
-	$(if $(filter $2,$(call anrem-dict-items,$1)),\
+	$(if $(filter $(call anrem-expand-local, $2),$(call anrem-dict-items,$(call anrem-expand-reference, $1))),\
 		$(TRUE),\
 		$(FALSE)\
 	)\
@@ -180,8 +180,8 @@ endef
 # @returns the key(s) associated to the given value or $(NULL)
 define anrem-dict-key-for =
 $(strip \
-	$(foreach anrem-dict-key-for-curr,$(call anrem-dict-keys, $1),\
-		$(if $(filter $2,$(call anrem-dict-get, $1, $(anrem-dict-key-for-curr))),\
+	$(foreach anrem-dict-key-for-curr,$(call anrem-dict-keys, $(call anrem-expand-reference, $1)),\
+		$(if $(filter $(call anrem-expand-local, $2),$(call anrem-dict-get, $(call anrem-expand-reference, $1), $(anrem-dict-key-for-curr))),\
 			$(anrem-dict-key-for-curr),\
 			$(NULL)\
 		)\

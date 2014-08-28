@@ -21,6 +21,22 @@ $(strip \
 endef
 
 #
+# For a local variable beginning by @, return its local name if possible;
+# otherwise return the same text given as input
+# such as @mylocalvar -> __local_prefix__mylocalvar
+#
+# @param $1 local variable name or normal text
+#
+define anrem-expand-reference = 
+$(strip \
+	$(if $(filter @%,$(strip $1)),\
+		$(call anrem-local, $(patsubst @%,%,$(strip $1))),\
+		$(strip $1)
+	)\
+)
+endef
+
+#
 # Local variables utility, this can be used to declare and access
 # local variables, this works inside the target rules too
 # @param $1 symbol name
@@ -115,3 +131,5 @@ $(strip \
 	)\
 )
 endef
+
+####### Implementation of project-local variables
