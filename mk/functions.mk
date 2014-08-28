@@ -1,12 +1,9 @@
-
-
-
-
 ##
 #
 # include functions from the library
 #
 
+include $(ANREM_COMPONENTS)/tags.mk
 include $(ANREM_COMPONENTS)/util.mk
 include $(ANREM_COMPONENTS)/modules.mk
 include $(ANREM_COMPONENTS)/local.mk

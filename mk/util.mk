@@ -10,6 +10,20 @@
 # @param $2 default
 anrem-optarg = $(strip $(if $(strip $1),$1,$2))
 
+#
+# define an implicit function without arguments
+# to be called upon access as $(symbol)
+# The implicit function act as a proxy toward another
+# function that is called with an arbitrary number of arguments
+#
+# @param $1 symbol to be defined
+# @param $2 function to be called
+# @param $3 arguments to the function
+#
+define anrem-proxy = 
+$(eval $1 = $$(call $2, $3))
+endef
+
 ############### list utils
 
 #
