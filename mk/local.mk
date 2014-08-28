@@ -2,26 +2,27 @@
 #
 # local variables
 # Here are defined the functions that manage module local variables
-# and expansion of the @ tags to the local variable value
+# and expansion of the local variable tags
 #
 
 #
-# Expand a local variable beginning by @, if possible
+# Expand a local variable beginning by @ (by default, see mk/tags.mk), if possible
 # otherwise return the same text given as input
 # such as @mylocalvar
 # @param $1 local variable name or normal text
 #
 define anrem-expand-local = 
 $(strip \
-	$(if $(filter @%,$(strip $1)),\
-		$(call anrem-local-get, $(patsubst @%,%,$(strip $1))),\
+	$(if $(filter $(ANREM_LOCAL_TAG_GET)%,$(strip $1)),\
+		$(call anrem-local-get, $(patsubst $(ANREM_LOCAL_TAG_GET)%,%,$(strip $1))),\
 		$(strip $1)
 	)\
 )
 endef
 
 #
-# For a local variable beginning by @, return its local name if possible;
+# For a local variable beginning by @ (by default, see mk/tags.mk), 
+# return its local name if possible;
 # otherwise return the same text given as input
 # such as @mylocalvar -> __local_prefix__mylocalvar
 #
@@ -29,8 +30,8 @@ endef
 #
 define anrem-expand-reference = 
 $(strip \
-	$(if $(filter @%,$(strip $1)),\
-		$(call anrem-local, $(patsubst @%,%,$(strip $1))),\
+	$(if $(filter $(ANREM_LOCAL_TAG_GET)%,$(strip $1)),\
+		$(call anrem-local, $(patsubst $(ANREM_LOCAL_TAG_GET)%,%,$(strip $1))),\
 		$(strip $1)
 	)\
 )
