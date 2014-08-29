@@ -31,8 +31,11 @@ endef
 # @param $1 list of modules to be included
 define anrem-include-modules = 
 $(foreach ANREM_CURRENT_MODULE,$1,\
-	$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk)))\
-	$(eval -include $(wildcard $(ANREM_CURRENT_MODULE)/$(ANREM_DEPS_DIR)/*.d))\
+	$(if $(call anrem-mod-check-ignore, $(ANREM_CURRENT_MODULE)),\
+		$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk)))\
+		$(eval -include $(wildcard $(ANREM_CURRENT_MODULE)/$(ANREM_DEPS_DIR)/*.d)),\
+		$(NOP)\
+	)\
 )\
 $(eval ANREM_CURRENT_MODULE := $(ANREM_MODULE_END))
 endef
@@ -101,9 +104,10 @@ endef
 #	name = path.split("/").last()
 #  projectName = anrem-ns-for-path(path)
 #  if (name in ns_modules[projectName]):
-#	anrem-ns-amend-var(projectName, name)
+#	if (ns_modules[projectName] != path):
+#		anrem-ns-amend-var(projectName, name, path)
 #  else:
-#	anrem-ns-add-var(projectName, name)
+#	anrem-ns-add-var(projectName, name, path)
 #
 define anrem-mod-register =
 $(eval anrem-mod-register-name := $(call anrem-optarg,$(strip $2),$(call anrem-path-filename, $1)))\
@@ -112,8 +116,14 @@ $(info mod:register $(anrem-mod-register-ns-name):$(anrem-mod-register-name))\
 $(if $(strip $(anrem-mod-register-ns-name)),\
 	$(info mod:register state of ns map dict $(call anrem-dict-keys, $(anrem-mod-register-ns-name)))\
 	$(if $(call anrem-dict-has-key, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),\
-		$(info mod:register existing)\
-		$(call anrem-ns-amend-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),\
+		$(if \
+			$(filter $(anrem-dict-get, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),$1)\
+			,\
+			$(NOP)\
+			,\
+			$(info mod:register existing)\
+			$(call anrem-ns-amend-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name), $1),\
+		),\
 		$(info mod:register new)\
 		$(call anrem-ns-add-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name), $1)\
 	),\
@@ -164,21 +174,46 @@ define anrem-mod-exclude =
 $(eval ANREM_EXCLUDE_MODULES = $(sort $(ANREM_EXCLUDE_MODULES) $(strip $1)))
 endef
 
+########################### module namespace (subproject handling)
+#
+# this provides transparent isolation for module variable names in all project and subprojects
+#
+
 #
 # make anrem inclusion system completely ignore a path
 # this path and subpaths are neither defined as module variables
 # nor imported
 # @param $1 path to ignore
 #
-define anrem-mod-ignore =
+define anrem-ns-ignore =
 $(eval ANREM_IGNORE_PATH = $(sort $(ANREM_IGNORE_PATH) $(strip $1)))
 endef
 
+#
+# Get value of a variable in a given namespace
+# @param $1 namespace name
+# @param $2 variable name
+#
+define anrem-ns-get =
+$($(strip $1)|$(strip $2))
+endef
 
-########################### module namespace (subproject handling)
 #
-# this provides transparent isolation for module variable names in all project and subprojects
+# Import scope files from all paths
+# The scope files define custom namespaces and 
+# ingore paths
 #
+# IMPORTANT: the scope file is always imported,
+# no matter if the path where it is found has been
+# added to the ignore list.
+#
+# @param $1 list of paths to scan
+#
+define anrem-ns-import-scope =
+$(foreach anrem-ns-import-scope-path,$1,\
+	$(eval -include $(anrem-ns-import-scope-path)/scope.mk)\
+)
+endef
 
 #
 # Discover projects in the current tree,
@@ -186,6 +221,7 @@ endef
 # @param $1 list of module directories to check
 #
 define anrem-ns-discover =
+$(call anrem-ns-import-scope, $1)\
 $(foreach anrem-ns-discover-candidate,$(strip $1),\
 	$(info ns:discover candidate $(anrem-ns-discover-candidate))\
 	$(eval anrem-ns-discover-mk := $(word 1,$(wildcard $(anrem-ns-discover-candidate)/*.mk)))\
@@ -219,14 +255,20 @@ endef
 # @retruns a namespace name
 #
 define anrem-ns-for-path =
-$(eval anrem-ns-for-path-candidate := $(NULL))\
-$(foreach anrem-ns-for-path-item, $(call anrem-dict-items, ANREM_PROJECTS),\
-	$(if $(call anrem-path-is-prefix, $(anrem-ns-for-path-item), $1),\
-		$(if $(call anrem-path-is-prefix, $(ANREM_PROJECTS[$(anrem-ns-for-path-candidate)]), $1),\
-			$(eval anrem-ns-for-path-candidate := $(strip $(call anrem-dict-key-for, ANREM_PROJECTS, $(anrem-ns-for-path-item)))),\
+$(strip \
+	$(eval anrem-ns-for-path-candidate := $(NULL))\
+	$(info ns:ns4path checking $1)\
+	$(foreach anrem-ns-for-path-item, $(call anrem-dict-items, ANREM_PROJECTS),\
+		$(info ns:ns4path is prefix $(anrem-ns-for-path-item) $1)\
+		$(if $(call anrem-path-is-prefix, $(anrem-ns-for-path-item), $1),\
+			$(info true)\
+			$(info ns:ns4path is prefix $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-for-path-candidate)) $(anrem-ns-for-path-item))\
+			$(if $(call anrem-path-is-prefix, $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-for-path-candidate)), $(anrem-ns-for-path-item)),\
+				$(eval anrem-ns-for-path-candidate := $(strip $(call anrem-dict-key-for, ANREM_PROJECTS, $(anrem-ns-for-path-item)))),\
+				$(NOP)\
+			),\
 			$(NOP)\
-		),\
-		$(NOP)\
+		)\
 	)\
 )\
 $(strip $(anrem-ns-for-path-candidate))
@@ -251,8 +293,10 @@ endef
 # The modules are then registered with different names.
 # @param $1 project name (i.e. namespace name)
 # @param $2 variable name to be modified
+# @param $3 variable value (module path) that was conflicting with $2
 #
 define anrem-ns-amend-var =
+$(error In namespace $(strip $1): $(call anrem-ns-get, $1, $2) has same name as $(strip $3), change name or declare a namespace)
 endef
 
 #
@@ -266,10 +310,11 @@ $(eval $(strip $1)|$(strip $2) := $(strip $3))
 endef
 
 #
-# Remove a module variable to the global scope
+# Remove a module variable from the global scope
 # @param $1 project name (namespace)
 # @param $2 variable name (module name)
 #
 #
 define anrem-ns-undef-var =
+$(eval undefine $(strip $1)|$(strip $2))
 endef

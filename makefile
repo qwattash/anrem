@@ -42,7 +42,7 @@ include $(ANREM_COMPONENTS)/alias.mk
 #
 # include top level project definition
 #
-include $(ANREM_TOP)/project.mk
+#include $(ANREM_TOP)/project.mk
 
 #
 # i) discover subprojects and root project
