@@ -237,13 +237,30 @@ endef
 # The project is registered in the dictionary ANREM_PROJECTS
 #
 # @param $1 path subproject directory path
+# @param [$2] namespace name to use, defaults to directory name
 #
 define anrem-ns-register =
-$(eval anrem-ns-register-project-name := $(call anrem-path-filename, $1))\
-$(info ns:register ANREM_PROJECTS[$(anrem-ns-register-project-name)] = $1)\
-$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
-$(call anrem-mod-ignore, $(strip $1)/mk)\
-$(info ns:register dump ignore paths: $(ANREM_IGNORE_PATH))
+$(eval anrem-ns-register-project-name := $(call anrem-optarg,$2,$(call anrem-path-filename, $1)))\
+$(if $(filter $(anrem-ns-register-project-name), $(call anrem-dict-keys, ANREM_PROJECTS)),\
+	$(if $(filter $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-register-project-name)), $1),\
+		$(NOP),\
+		$(call anrem-ns-amend, $(anrem-ns-register-project-name), $1)\
+	),\
+	$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
+	$(call anrem-mod-ignore, $(strip $1)/mk)\
+	$(info ns:register dump ignore paths: $(ANREM_IGNORE_PATH))\
+)
+endef
+
+#
+# Handle a conflict among two namespace
+# names, currently it just give an error
+#
+# @param $1 namespace name
+# @param $2 path that is conflicting with the current name
+#
+define anrem-ns-amend =
+$(error Namespace $1: $(anrem-dict-get, ANREM_PROJECTS, $1) has same name as $(strip $2), change name of the namespace)
 endef
 
 #

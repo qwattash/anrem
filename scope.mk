@@ -10,4 +10,4 @@
 #
 
 #$(call anrem-ns-ignore, ./testing)
-$(call anrem-ns-register, ./testing/src/b)
+$(call anrem-ns-register, ./testing/src/b, mycustomnamespace)
