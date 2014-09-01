@@ -6,6 +6,15 @@
 # 
 
 #
+# some constant that are not meant to be 
+# configurable by the user
+#
+ANREM_MOD_PROJECT_FILE := project
+ANREM_MOD_SCOPE_FILE := scope
+ANREM_MOD_PRIVATE_MK_DIR := mk
+
+
+#
 # Main function that processes the modules
 # this function includes the modules and register project namespaces and module variables
 # @param $1 a list of paths that are candidate positions for modules
@@ -32,8 +41,15 @@ endef
 define anrem-include-modules = 
 $(foreach ANREM_CURRENT_MODULE,$1,\
 	$(if $(call anrem-mod-check-ignore, $(ANREM_CURRENT_MODULE)),\
-		$(eval -include $(word 1,$(wildcard $(ANREM_CURRENT_MODULE)/*.mk)))\
-		$(eval -include $(wildcard $(ANREM_CURRENT_MODULE)/$(ANREM_DEPS_DIR)/*.d)),\
+		$(eval anrem-include-modules-mk := $(wildcard $(ANREM_CURRENT_MODULE)/*.mk))\
+		$(foreach anrem-include-modules-mk-item, $(wildcard $(ANREM_CURRENT_MODULE)/*.mk),\
+			$(if $(call anrem-mod-check-file-parse, $(anrem-include-modules-mk-item)),\
+				$(eval -include $(anrem-include-modules-mk-item)),\
+				$(NOP)\
+			)\
+		)\
+		$(eval -include $(wildcard $(ANREM_CURRENT_MODULE)/$(ANREM_DEPS_DIR)/*.d))\
+		,\
 		$(NOP)\
 	)\
 )\
@@ -44,6 +60,24 @@ endef
 # retrieve the current path of the module
 # useful for defining module targets
 anrem-current-path = $(ANREM_CURRENT_MODULE)
+
+#
+# Check whether the given file should be
+# evaluated by the inclusion system or not
+# This is used both for inclusion and module name definition
+# to avoid that scope files and future files gets in the way
+#
+# @param $1 the file path
+# @returns $(TRUE) if the file should be evaluated, $(FALSE) otherwise
+#
+define anrem-mod-check-file-parse =
+$(strip \
+	$(if $(filter $(ANREM_MOD_SCOPE_FILE), $(call anrem-path-filename, $1)),\
+		$(FALSE),\
+		$(TRUE)\
+	)\
+)
+endef
 
 #
 # given a path, check if that path should be ignored
@@ -92,6 +126,52 @@ $(strip \
 endef
 
 #
+# Get the name of a module given a list of mk files that it contains
+# The first file allowed to be parsed defines the name of the module
+# If there are multiple allowed files in the module an error is raised
+#
+# Notice that this does not replace anrem-mod-check-register, this only
+# returns the name of the module among multiple choices available, it does not
+# decide whether the module should be registered or not
+#
+# Note also that this function should be called AFTER anrem-mod-check-register
+# and anrem-mod-check-ignore to avoid to see the multiple .mk files in the ./mk dir
+#
+# @param $1 list of mk files in the module
+# @returns the name of the module
+#
+define anrem-mod-get-name =
+$(strip \
+	$(info mod:getname looking for name among $1)\
+	$(eval anrem-mod-get-name-output := $(NULL))\
+	$(foreach anrem-mod-get-name-file, $1,\
+		$(info mod:getname checking $(anrem-mod-get-name-file))\
+		$(if $(call anrem-mod-check-file-parse, $(anrem-mod-get-name-file)),\
+			$(info mod:getname check parse OK)\
+			$(if $(strip $(anrem-mod-get-name-output)),\
+				$(error Multiple mk files for a module: $(strip $1))\
+				,\
+				$(if $(or \
+					$(filter module, $(call anrem-path-filename, $(anrem-mod-get-name-file))),\
+					$(filter $(ANREM_MOD_PROJECT_FILE), $(call anrem-path-filename, $(anrem-mod-get-name-file)))\
+					),\
+					$(eval anrem-mod-get-name-output := $(call anrem-path-filename, $(dir $(anrem-mod-get-name-file))))\
+					,\
+					$(eval anrem-mod-get-name-output := $(call anrem-path-filename, $(anrem-mod-get-name-file)))\
+				)\
+			)\
+			$(info mod:getname set output to $(anrem-mod-get-name-output))\
+			,\
+			$(info mod:getname check parse FAILED)\
+			$(NOP)\
+		)\
+	)\
+	$(anrem-mod-get-name-output)\
+)
+endef
+
+
+#
 # Register a module within its namespace, namespace is discovered from
 # the module path
 # @param $1 path module path to be registered
@@ -110,11 +190,11 @@ endef
 #	anrem-ns-add-var(projectName, name, path)
 #
 define anrem-mod-register =
-$(eval anrem-mod-register-name := $(call anrem-optarg,$(strip $2),$(call anrem-path-filename, $1)))\
+$(eval anrem-mod-register-name := $(strip $2))\
 $(eval anrem-mod-register-ns-name := $(call anrem-ns-for-path, $1))\
 $(info mod:register $(anrem-mod-register-ns-name):$(anrem-mod-register-name))\
 $(if $(strip $(anrem-mod-register-ns-name)),\
-	$(info mod:register state of ns map dict $(call anrem-dict-keys, $(anrem-mod-register-ns-name)))\
+	$(info mod:register ENTER state of ns map dict: keys [$(call anrem-dict-keys, $(anrem-mod-register-ns-name))])\
 	$(if $(call anrem-dict-has-key, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),\
 		$(if \
 			$(filter $(anrem-dict-get, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),$1)\
@@ -126,7 +206,9 @@ $(if $(strip $(anrem-mod-register-ns-name)),\
 		),\
 		$(info mod:register new)\
 		$(call anrem-ns-add-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name), $1)\
-	),\
+	)\
+	$(info mod:register EXIT state of ns map dict: keys [$(call anrem-dict-keys, $(anrem-mod-register-ns-name))])\
+	,\
 	$(info mod:register invalid ns!)\
 	$(NOP)\
 )
@@ -146,15 +228,14 @@ endef
 #
 define anrem-mod-discover = 
 $(foreach anrem-mod-discover-module, $1,\
-	$(eval anrem-mod-discover-mk := $(word 1,$(wildcard $(anrem-mod-discover-module)/*.mk)))\
-	$(eval anrem-mod-discover-name := $(call anrem-path-filename, $(anrem-mod-discover-mk)))\
-	$(info mod:discover candidate $(anrem-mod-discover-module) mk $(anrem-mod-discover-mk) name $(anrem-mod-discover-name))\
+	$(eval anrem-mod-discover-mk := $(wildcard $(anrem-mod-discover-module)/*.mk))\
+	$(info mod:discover candidate $(anrem-mod-discover-module) mk $(anrem-mod-discover-mk))\
 	$(if $(call anrem-mod-check-ignore, $(anrem-mod-discover-module)),\
 		$(if $(call anrem-mod-check-register, $(anrem-mod-discover-mk)),\
-			$(if $(or $(filter module,$(anrem-mod-discover-name)),$(filter project,$(anrem-mod-discover-name))),\
-				$(call anrem-mod-register, $(anrem-mod-discover-module)),\
-				$(call anrem-mod-register, $(anrem-mod-discover-module), $(anrem-mod-discover-name))\
-			),\
+			$(eval anrem-mod-discover-name := $(call anrem-mod-get-name, $(anrem-mod-discover-mk)))\
+			$(info mod:discover module name $(anrem-mod-discover-name))\
+			$(call anrem-mod-register, $(anrem-mod-discover-module), $(anrem-mod-discover-name))\
+			,\
 			$(info mod:discover rejected in register check)\
 			$(NOP)\
 		),\
@@ -211,7 +292,7 @@ endef
 #
 define anrem-ns-import-scope =
 $(foreach anrem-ns-import-scope-path,$1,\
-	$(eval -include $(anrem-ns-import-scope-path)/scope.mk)\
+	$(eval -include $(anrem-ns-import-scope-path)/$(ANREM_MOD_SCOPE_FILE).mk)\
 )
 endef
 
@@ -224,10 +305,13 @@ define anrem-ns-discover =
 $(call anrem-ns-import-scope, $1)\
 $(foreach anrem-ns-discover-candidate,$(strip $1),\
 	$(info ns:discover candidate $(anrem-ns-discover-candidate))\
-	$(eval anrem-ns-discover-mk := $(word 1,$(wildcard $(anrem-ns-discover-candidate)/*.mk)))\
-	$(if $(filter project,$(call anrem-path-filename, $(anrem-ns-discover-mk))),\
-		$(call anrem-ns-register, $(anrem-ns-discover-candidate)),\
-		$(NULL)\
+	$(eval anrem-ns-discover-mk := $(wildcard $(anrem-ns-discover-candidate)/*.mk))\
+	$(info ns:discover candidate mk $(anrem-ns-discover-mk))\
+	$(foreach anrem-ns-discover-mk-candidate, $(anrem-ns-discover-mk),\
+		$(if $(filter $(ANREM_MOD_PROJECT_FILE),$(call anrem-path-filename, $(anrem-ns-discover-mk-candidate))),\
+			$(call anrem-ns-register, $(anrem-ns-discover-candidate)),\
+			$(NOP)\
+		)\
 	)\
 )
 endef
@@ -241,13 +325,17 @@ endef
 #
 define anrem-ns-register =
 $(eval anrem-ns-register-project-name := $(call anrem-optarg,$2,$(call anrem-path-filename, $1)))\
+$(info ns:register registering: $1 with name $(anrem-ns-register-project-name))\
 $(if $(filter $(anrem-ns-register-project-name), $(call anrem-dict-keys, ANREM_PROJECTS)),\
 	$(if $(filter $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-register-project-name)), $1),\
+		$(info ns:register ns already existing, NOP)\
 		$(NOP),\
+		$(info ns:register ns already existing and conflicting)\
 		$(call anrem-ns-amend, $(anrem-ns-register-project-name), $1)\
 	),\
+	$(info ns:register new namespace)\
 	$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
-	$(call anrem-mod-ignore, $(strip $1)/mk)\
+	$(call anrem-ns-ignore, $(strip $1)/$(ANREM_MOD_PRIVATE_MK_DIR))\
 	$(info ns:register dump ignore paths: $(ANREM_IGNORE_PATH))\
 )
 endef

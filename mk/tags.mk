@@ -27,3 +27,23 @@ ANREM_LOCAL_TAG_SET := @
 # default is $(@), which gives $(@var_name) # returns value
 #
 ANREM_LOCAL_TAG_GET := @
+
+# namespace local variable definition block start tag
+# default is $(!&)
+#
+ANREM_LOCAL_NS_TAG_BLK_START := !&
+
+# namespace local variable definition block end tag
+# default is $(&!)
+#
+ANREM_LOCAL_NS_TAG_BLK_END := &!
+
+# namespace local variable definition tag
+# default is $(&), which gives $(&)var_name := value
+#
+ANREM_LOCAL_NS_TAG_SET := &
+
+# namespace local variable definition tag
+# default is $(&), which gives $(&var_name) # returns value
+#
+ANREM_LOCAL_NS_TAG_GET := &

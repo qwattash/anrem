@@ -15,4 +15,3 @@ $(call anrem-clean):
 
 $(call anrem-test):
 	@echo -n ""
-

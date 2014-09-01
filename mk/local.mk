@@ -87,7 +87,7 @@ define anrem-local-def-proxy =
 $(call anrem-proxy, $(strip $(ANREM_LOCAL_TAG_GET))$(strip $1), anrem-local-get, $1)
 endef
 
-## shorthand method for anrem-local-set
+## shorthand method for anrem-local-set and get
 
 #
 # The idea is to define a block of local variables as
@@ -124,13 +124,111 @@ endef
 #
 define $(ANREM_LOCAL_TAG_BLK_END) =
 $(strip \
-	$(foreach i,$(.VARIABLES),\
-		$(if $(filter $(i),$(anrem-local-snapshot)),
+	$(foreach anrem-local-blk-end,$(.VARIABLES),\
+		$(if $(filter $(anrem-local-blk-end),$(anrem-local-snapshot)),
 			$(NOP),\
-			$(call anrem-local-def-proxy, $(subst $(call anrem-local-get-prefix)_,,$(i)))\
+			$(call anrem-local-def-proxy, $(subst $(call anrem-local-get-prefix)_,,$(anrem-local-blk-end)))\
 		)\
 	)\
 )
 endef
 
 ####### Implementation of project-local variables
+
+#
+# Namespace local variables utility, this can be used to declare and access
+# local variables in a namespace, this works inside the target rules too
+# @param $1 symbol name
+#
+define anrem-ns-local = 
+$(strip $(strip $(call anrem-ns-local-get-prefix))_$(strip $1))
+endef
+
+#
+# Helper for anrem-local, gives the current path
+# from both inside a target rule and outside.
+define anrem-ns-local-get-prefix =
+__nslocal_$(strip \
+	$(if $(filter $(ANREM_MODULE_END),$(call anrem-current-path)),
+		$(call anrem-ns-for-path, $(path)),\
+		$(call anrem-ns-for-path, $(call anrem-current-path))\
+	)\
+)
+endef
+
+
+#
+# Set a local variable with namespace scope
+# @param $1 the name of the variable
+# @param $2 the value of the variable
+#
+define anrem-ns-local-set =
+$(eval $(call anrem-ns-local, $1) := $(strip $2))\
+$(call anrem-ns-local-def-proxy, $1)
+endef
+
+#
+# Set a local variable with namespace scope
+# @param $1 the name of the variable
+# @returns the value of the variable
+#
+define anrem-ns-local-get =
+$($(call anrem-ns-local, $1))
+endef
+
+#
+# Create a proxy symbol to access a namespace local variable in
+# the current scope
+# @param $1 local symbol name
+#
+define anrem-ns-local-def-proxy =
+$(call anrem-proxy, $(strip $(ANREM_LOCAL_NS_TAG_GET))$(strip $1), anrem-ns-local-get, $1)
+endef
+
+## shorthand method for anrem-ns-local-set and get
+
+#
+# The idea is to define a block of local variables as
+# The tags (the thingy inside the $(..) stuff) is configurable from mk/tags.mk 
+#
+#
+# $(!&) # start of local definition block
+# $(&)myvar_1 := something
+# $(&)myvar_2 := other_stuff
+# $(&!) # end of local definition block, from now on can use $(&myvar_1)
+#
+
+#
+# Shorthand version for anrem-ns-local-set,
+# define the start of a local variable block
+#
+define $(ANREM_LOCAL_NS_TAG_BLK_START) =
+$(eval anrem-ns-local-snapshot := $(sort $(.VARIABLES) anrem-ns-local-snapshot))
+endef
+
+#
+# short version of anrem-ns-local-set, in practice
+# this is used to the the local prefix for a variable like
+#
+# @returns the variable local prefix
+#
+define $(ANREM_LOCAL_NS_TAG_SET) =
+$(strip $(strip $(call anrem-ns-local-get-prefix))_)
+endef
+
+#
+# Shorthand version for anrem-ns-local-set,
+# define the end of a local variable block
+#
+define $(ANREM_LOCAL_NS_TAG_BLK_END) =
+$(strip \
+	$(foreach anrem-ns-local-blk-end,$(.VARIABLES),\
+		$(if $(filter $(anrem-ns-local-blk-end),$(anrem-local-snapshot)),
+			$(NOP),\
+			$(call anrem-ns-local-def-proxy, \
+				$(subst $(call anrem-ns-local-get-prefix)_,,$(anrem-ns-local-blk-end))\
+			)\
+		)\
+	)\
+)
+endef
