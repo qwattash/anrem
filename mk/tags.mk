@@ -11,12 +11,12 @@
 # local variable definition block start tag
 # default is $(!@)
 #
-ANREM_LOCAL_TAG_BLK_START := !@
+ANREM_LOCAL_TAG_BLK_START := <@
 
 # local variable definition block end tag
 # default is $(@!)
 #
-ANREM_LOCAL_TAG_BLK_END := @!
+ANREM_LOCAL_TAG_BLK_END := @>
 
 # local variable definition tag
 # default is $(@), which gives $(@)var_name := value
@@ -31,12 +31,12 @@ ANREM_LOCAL_TAG_GET := @
 # namespace local variable definition block start tag
 # default is $(!&)
 #
-ANREM_LOCAL_NS_TAG_BLK_START := !&
+ANREM_LOCAL_NS_TAG_BLK_START := <&
 
 # namespace local variable definition block end tag
 # default is $(&!)
 #
-ANREM_LOCAL_NS_TAG_BLK_END := &!
+ANREM_LOCAL_NS_TAG_BLK_END := &>
 
 # namespace local variable definition tag
 # default is $(&), which gives $(&)var_name := value

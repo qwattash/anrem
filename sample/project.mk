@@ -30,12 +30,3 @@
 # 	declaration system (just like anrem-exclude-modx)
 # "*.mk": everything not starting with a "_" and not named "module.mk" is treated as a custom name
 #	to use (just like anrem-def-modx
-
-# namespace var
-$(call anrem-ns-local-set, my_local_var, my_local_var_in_sample)
-#$(!&)
-#$(&)my_local_var := my_local_var_in_sample
-#$(&!)
-
-$(info Sample says $(call anrem-ns-local-get, my_local_var))
-$(info fast Sample says $(&my_local_var))

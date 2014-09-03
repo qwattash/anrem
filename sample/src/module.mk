@@ -12,5 +12,3 @@ $(call anrem-test, test_$(CURRENT)):
 	$(MOD_mod1)/hello
 	$(MOD_name)/hello
 	$(MOD_main)/../build/hello
-
-$(info Sample module.mk says $(call anrem-ns-local-get, my_local_var))

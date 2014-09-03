@@ -223,7 +223,7 @@ endef
 define $(ANREM_LOCAL_NS_TAG_BLK_END) =
 $(strip \
 	$(foreach anrem-ns-local-blk-end,$(.VARIABLES),\
-		$(if $(filter $(anrem-ns-local-blk-end),$(anrem-local-snapshot)),
+		$(if $(filter $(anrem-ns-local-blk-end),$(anrem-ns-local-snapshot)),
 			$(NOP),\
 			$(call anrem-ns-local-def-proxy, \
 				$(subst $(call anrem-ns-local-get-prefix)_,,$(anrem-ns-local-blk-end))\
