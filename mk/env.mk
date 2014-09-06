@@ -43,15 +43,11 @@ ANREM_IGNORE_PATH := $(NULL)
 #user defined targets list
 ANREM_BUILD_TARGETS :=
 
-#user defined debug targets
-#TODO not yet implemented
-DEBUG_TARGETS :=
-
 #user defined clear list
 ANREM_BUILD_CLEAN :=
 
-#same as BUILD_CLEAN but for debug stuff
-DEBUG_CLEAN :=
+#same as BUILD_CLEAN but for test stuff
+ANREM_TEST_CLEAN :=
 
 #user defined test targets list
 ANREM_TEST_TARGETS :=

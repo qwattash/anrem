@@ -9,5 +9,5 @@
 # system initialization.
 #
 
-#$(call anrem-ns-ignore, ./testing)
-$(call anrem-ns-register, ./testing/src/b, mycustomnamespace)
+$(call anrem-ns-ignore, ./testing)
+#$(call anrem-ns-register, ./testing/src/b, mycustomnamespace)

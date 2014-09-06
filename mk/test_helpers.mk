@@ -4,6 +4,9 @@
 # this file is loaded upon request by anrem-test-load-helpers
 ########################
 
+# import terminal colors
+-include $(ANREM_COMPONENTS)/termcolors.mk
+
 #####################
 # support for logging of test output
 #
@@ -26,27 +29,72 @@ endef
 #
 define anrem-test-log =
 	$(if $(ANREM_TEST_LOG_FILE),\
-		| tee $(ANREM_TEST_LOG_FILE),\
+		| tee -a $(ANREM_TEST_LOG_FILE),\
 		$(NULL),
 	)
 endef
 
+#
+# Short version for anrem-test-log
+#
+define $(ANREM_TEST_TAG_LOG) =
+$(strip $(call anrem-test-log))
+endef
+
 #####################
 # Basic output helpers
+# to be used as shell commands
 #
-anrem-pass = $(info $(shell echo -e "\e[32m[+]$1 -> OK\e[0m"))
 
-anrem-fail = $(info $(shell echo -e "\e[31m[-]$1 -> FAIL\e[0m"))
+define anrem-log-prefix =
+$(shell echo -e "[$$(date '+%T-%x')]")
+endef
 
-anrem-warn = $(info $(shell echo -e "\e[33m[.]$1\e[0m"))
+define anrem-pass = 
+$(info \
+	$(shell echo -e "$(call anrem-log-prefix)[+] $(strip $1) -> PASS" >> $(ANREM_TEST_LOG_FILE))\
+	$(shell echo -e "$(anrem-term-green)[+] $(strip $1) -> PASS$(anrem-term-end)")\
+)
+endef
+
+define anrem-fail = 
+$(info \
+	$(shell echo -e "$(call anrem-log-prefix)[-] $(strip $1) -> FAIL" >> $(ANREM_TEST_LOG_FILE))\
+	$(shell echo -e "$(anrem-term-red)[-] $(strip $1) -> FAIL$(anrem-term-end)")\
+)
+endef
+
+define anrem-warn = 
+$(info \
+	$(shell echo -e "$(call anrem-log-prefix)[.] $(strip $1)" >> $(ANREM_TEST_LOG_FILE))\
+	$(shell echo -e "$(anrem-term-yellow)[.] $(strip $1) $(anrem-term-end)")\
+)
+endef
 
 # this is a variant of anrem warn designed to be called inside test rules
-anrem-msg = @echo -e "\e[33m[.]$1\e[0m"
+define anrem-msg = 
+$(strip @echo -e "$(anrem-term-yellow)[.] $(strip $1) $(anrem-term-end)" && \
+echo "$(call anrem-log-prefix)[.] $(strip $1)" >> $(ANREM_TEST_LOG_FILE))
+endef
+
+########################
+# Assertions
+#
 
 #
-# Assertions
-# notice that shell comparisons are used, this is bad but the scope of
-# the testing code is limited and not oriented to production.
+# A more verbose error function for failures
+# @param $1 the test message string
+# @param $2 the assertion error message
+# @param $3 the expected value
+# @param $4 the value found instead
+#
+define anrem-test-fail =
+$(call anrem-fail, $1: $2; Expected $3 but found $4)
+endef
+
+#
+# notice that shell comparisons are used, this might be bad but
+# the testing code is limited to the anrem tests for now
 #
 # all assertion functions have the following signature
 # @param $1 assertion message
@@ -54,16 +102,19 @@ anrem-msg = @echo -e "\e[33m[.]$1\e[0m"
 # @param $3 assertion param #2 (if needed)
 #
 # >>> WARNING <<<
+# strict equal assertion
 # Pay attention to how you call these functions!
 # $(call anrem-assert-eq, message, 10, 10) //pass
 # $(call anrem-assert-eq, message, 10,10) //fail
 # spaces are not stripped because it may trigger false negatives, however
 # is up to the developer not to trigger false positives!
 #
-define anrem-assert-eq = 
-$(if $(shell if [ "$2" = "$3" ]; then echo "1"; fi),\
-	$(call anrem-pass, $1),\
-	$(call anrem-fail, $1)\
+define anrem-assert-seq = 
+$(strip \
+	$(if $(shell if [ "$2" = "$3" ]; then echo "1"; fi),\
+		$(call anrem-pass, $1),\
+		$(call anrem-test-fail, $1, Not strictly equal,'$2','$3')\
+	)\
 )
 endef
 
@@ -72,35 +123,63 @@ endef
 # the input.
 # This may be safer than anrem-asser-eq
 #
-define anrem-strip-assert-eq = 
-$(if $(shell if [ $(strip "$2") = $(strip "$3") ]; then echo "1"; fi),\
-	$(call anrem-pass, $1),\
-	$(call anrem-fail, $1)\
+define anrem-assert-eq = 
+$(strip \
+	$(if $(shell if [ "$(strip $2)" = "$(strip $3)" ]; then echo "1"; fi),\
+		$(call anrem-pass, $1),\
+		$(call anrem-test-fail, $1, Not equal,'$2','$3')\
+	)\
 )
 endef
 
 define anrem-assert-neq = 
-$(if $(shell if [ "$2" != "$3" ]; then echo "1"; fi),\
-	$(call anrem-pass, $1),\
-	$(call anrem-fail, $1)\
+$(strip \
+	$(if $(shell if [ "$(strip $2)" != "$(strip $3)" ]; then echo "1"; fi),\
+		$(call anrem-pass, $1),\
+		$(call anrem-test-fail, $1, Equal,not '$2','$3')\
+	)\
 )
 endef
 
 #
 # check that given element is not in the list
-# @param $2 list
-# @param $3 element
+# @param $2 element
+# @param $3 list
 #
-define anrem-assert-not-in-list =
-$(if $(filter $3,$2),\
-	$(call anrem-fail, $1),\
-	$(call anrem-pass, $1)\
+define anrem-assert-list-not-in =
+$(strip \
+	$(if $(filter $2,$3),\
+		$(call anrem-test-fail, $1, Element is in list,'[$(filter-out $2, $3)]','[$3]'),\
+		$(call anrem-pass, $1)\
+	)\
+)
+endef
+
+#
+# check that given element is in the list
+#
+# In the corner case that both $2 and $3 are null the test passes
+#
+# @param $2 element
+# @param $3 list
+#
+define anrem-assert-list-in =
+$(strip \
+	$(if $(strip $2$3),
+		$(if $(filter $2,$3),\
+			$(call anrem-pass, $1),\
+			$(call anrem-test-fail, $1, Element is in list,'[$(strip $2 $3)]','[$3]')
+		),\
+		$(call anrem-pass, $1)\
+	)\
 )
 endef
 
 # this checks the ordering too
 define anrem-assert-eq-list =
-$(call anrem-assert-eq,$1, $(strip $2), $(strip $3))
+$(strip \
+	$(call anrem-assert-eq,$1, $(strip $2), $(strip $3))\
+)
 endef
 
 # this does not check the ordering
@@ -108,39 +187,45 @@ endef
 # times in list 2, then filter out list 2 with list 1 and detect
 # any left additional items
 define anrem-assert-same-list =
-$(eval anrem-assert-same-list-result := $(NULL))\
-$(foreach anrem-assert-same-list-item1,$2,\
-	$(if $(filter $(anrem-assert-same-list-item1),$3),\
-		$(if $(filter $(words $(filter $(anrem-assert-same-list-item1),$3)),\
-				$(words $(filter $(anrem-assert-same-list-item1),$2))),\
-			$(NULL),\
+$(strip \
+	$(eval anrem-assert-same-list-result := $(NULL))\
+	$(foreach anrem-assert-same-list-item1,$2,\
+		$(if $(filter $(anrem-assert-same-list-item1),$3),\
+			$(if $(filter $(words $(filter $(anrem-assert-same-list-item1),$3)),\
+					$(words $(filter $(anrem-assert-same-list-item1),$2))),\
+				$(NULL),\
+				$(eval anrem-assert-same-list-result := F)\
+			)\
+		,\
 			$(eval anrem-assert-same-list-result := F)\
 		)\
-	,\
+	)\
+	$(if $(filter-out $2,$3),\
 		$(eval anrem-assert-same-list-result := F)\
 	)\
-)\
-$(if $(filter-out $2,$3),\
-	$(eval anrem-assert-same-list-result := F)\
-)\
-$(if $(anrem-assert-same-list-result),\
-	$(call anrem-fail, $1),\
-	$(call anrem-pass, $1)\
+	$(if $(anrem-assert-same-list-result),\
+		$(call anrem-test-fail, $1, List has not the same elements,'[$2]','[$3]'),\
+		$(call anrem-pass, $1)\
+	)\
 )
 endef
 
 # file exists
 define anrem-assert-exists = 
-$(if $(shell if [ -e $2 ]; then echo "1"; fi),\
-	$(call anrem-pass, $1),\
-	$(call anrem-fail, $1)\
+$(strip \
+	$(if $(shell if [ -e "$2" ]; then echo "1"; fi),\
+		$(call anrem-pass, $1),\
+		$(call anrem-test-fail, $1, File does not exist,'$2','No file')\
+	)\
 )
 endef
 
 # file does not exist
 define anrem-assert-not-exists = 
-$(if $(shell if [ -e $2 ]; then echo "1"; fi),\
-	$(call anrem-fail, $1),\
-	$(call anrem-pass, $1)\
+$(strip \
+	$(if $(shell if [ -e "$2" ]; then echo "1"; fi),\
+		$(call anrem-test-fail, $1, File exist,'No file','$2'),\
+		$(call anrem-pass, $1)\
+	)\
 )
 endef

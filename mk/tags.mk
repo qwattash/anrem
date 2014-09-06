@@ -5,6 +5,12 @@
 #
 #
 
+######### Testing tags
+
+# tee to log file a shell command output
+# default is $(>>)
+#
+ANREM_TEST_TAG_LOG := >>
 
 ######### Local variables blocks
 

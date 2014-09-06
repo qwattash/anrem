@@ -41,6 +41,18 @@ $(strip \
 endef
 
 #
+# add a target to the test clean target list, this is meant to
+# hold targets used to clean the testing environment
+# @param $1 the target to add to the list
+#
+define anrem-test-clean =
+$(strip \
+	$(call anrem-target, $(call anrem-optarg,$(call anrem-expand-local, $1),test_clean_$(call anrem-current-path)))\
+	$(call anrem-test-clean-list-add, $(call anrem-optarg,$(call anrem-expand-local, $1),test_clean_$(call anrem-current-path)))\
+)
+endef
+
+#
 # declare a target in the current module path.
 # This does not add the target to any anrem target list.
 # A target-local variable "path" is created to hold the path of the module
@@ -74,6 +86,13 @@ endef
 # @param $1: target name
 define anrem-test-list-add =
 $(eval ANREM_TEST_TARGETS += $(call anrem-expand-local, $1))
+endef
+
+#
+# add given target to the test clean list 
+# @param $1: target name
+define anrem-test-clean-list-add =
+$(eval ANREM_TEST_CLEAN_TARGETS += $(call anrem-expand-local, $1))
 endef
 
 ############################################# target local variables
