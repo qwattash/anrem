@@ -50,31 +50,65 @@ define anrem-log-prefix =
 $(shell echo -e "[$$(date '+%T-%x')]")
 endef
 
-define anrem-pass = 
-$(info \
-	$(shell echo -e "$(call anrem-log-prefix)[+] $(strip $1) -> PASS" >> $(ANREM_TEST_LOG_FILE))\
-	$(shell echo -e "$(anrem-term-green)[+] $(strip $1) -> PASS$(anrem-term-end)")\
+##### coloring functions
+
+define anrem-make-green =
+$(shell echo -e "$(anrem-term-green)$(strip $1)$(anrem-term-end)")
+endef
+
+define anrem-make-red = 
+$(shell echo -e "$(anrem-term-red)$(strip $1)$(anrem-term-end)")
+endef
+
+define anrem-make-yellow =
+$(shell echo -e "$(anrem-term-yellow)$(strip $1)$(anrem-term-end)")
+endef
+
+###### output functions
+
+#
+# output function that also log the output
+# @param $1 the string to print
+# @param $2 the coloring function
+#
+define anrem-test-echo =
+$(strip \
+	$(shell echo -e "$(call anrem-log-prefix)$(strip $1)" >> $(ANREM_TEST_LOG_FILE))\
+	$(info $(call $2, $(strip $1)))\
 )
+endef
+
+###### assertion output functions
+
+define anrem-pass = 
+$(call anrem-test-echo, [+] $(strip $1) -> PASS, anrem-make-green)
 endef
 
 define anrem-fail = 
-$(info \
-	$(shell echo -e "$(call anrem-log-prefix)[-] $(strip $1) -> FAIL" >> $(ANREM_TEST_LOG_FILE))\
-	$(shell echo -e "$(anrem-term-red)[-] $(strip $1) -> FAIL$(anrem-term-end)")\
-)
+$(call anrem-test-echo, [-] $(strip $1) -> FAIL, anrem-make-red)
 endef
 
 define anrem-warn = 
-$(info \
-	$(shell echo -e "$(call anrem-log-prefix)[.] $(strip $1)" >> $(ANREM_TEST_LOG_FILE))\
-	$(shell echo -e "$(anrem-term-yellow)[.] $(strip $1) $(anrem-term-end)")\
-)
+$(call anrem-test-echo, [.] $(strip $1), anrem-make-yellow)
 endef
 
 # this is a variant of anrem warn designed to be called inside test rules
+# @TODO is this deprecated??
+#
 define anrem-msg = 
 $(strip @echo -e "$(anrem-term-yellow)[.] $(strip $1) $(anrem-term-end)" && \
 echo "$(call anrem-log-prefix)[.] $(strip $1)" >> $(ANREM_TEST_LOG_FILE))
+endef
+
+#
+# format the print of a list
+# @param $1 the list to be printed
+# @param $2 coloring function
+#
+define anrem-list-fancy-print =
+$(foreach anrem-list-fancy-print-item, $(subst $(SPACE),$(COMMA)$(SPACE),$(strip $1)),\
+	$(call anrem-test-echo, $(anrem-list-fancy-print-item), $2)\
+)
 endef
 
 ########################
@@ -93,13 +127,46 @@ $(call anrem-fail, $1: $2; Expected $3 but found $4)
 endef
 
 #
+# A better formatted failure function for lists
+# @param $1 the test message string
+# @param $2 the assertion error message
+# @param $3 the expected value
+# @param $4 the value found instead
+#
+define anrem-test-list-fail =
+$(call anrem-fail, $1: $2)\
+$(call anrem-test-echo, Expected: [, anrem-make-red)\
+$(call anrem-list-fancy-print, $3, anrem-make-red)\
+$(call anrem-test-echo, ], anrem-make-red)\
+$(call anrem-test-echo, Found: [, anrem-make-red)\
+$(call anrem-list-fancy-print, $4, anrem-make-red)\
+$(call anrem-test-echo, ], anrem-make-red)
+endef
+
+#
+# Prints the diff of two lists, useful for error
+# reporting
+# @param $1 expected list
+# @param $2 found list
+# @param $3 coloring function
+#
+define anrem-test-list-diff =
+$(call anrem-test-echo, Extra items: [, $3)\
+$(call anrem-list-fancy-print, $(filter-out $1, $2), $3)\
+$(call anrem-test-echo, ], $3)\
+$(call anrem-test-echo,  Missing items: [, $3)\
+$(call anrem-list-fancy-print, $(filter-out $2, $1), $3)\
+$(call anrem-test-echo, ], $3)
+endef
+
+#
 # notice that shell comparisons are used, this might be bad but
 # the testing code is limited to the anrem tests for now
 #
 # all assertion functions have the following signature
 # @param $1 assertion message
-# @param $2 assertion param #1
-# @param $3 assertion param #2 (if needed)
+# @param $2 assertion param #1 (value found)
+# @param $3 assertion param #2 (if needed) (value expected)
 #
 # >>> WARNING <<<
 # strict equal assertion
@@ -204,7 +271,9 @@ $(strip \
 		$(eval anrem-assert-same-list-result := F)\
 	)\
 	$(if $(anrem-assert-same-list-result),\
-		$(call anrem-test-fail, $1, List has not the same elements,'[$2]','[$3]'),\
+		$(call anrem-test-list-fail, $1, List has not the same elements, $3, $2)\
+		$(call anrem-test-list-diff, $3, $2, anrem-make-red)\
+		,\
 		$(call anrem-pass, $1)\
 	)\
 )

@@ -63,6 +63,9 @@ NOP := $(NULL)
 # space variable useful in some cases
 SPACE := $(NULL) $(NULL)
 
+# comma variable useful to print commas
+COMMA := ,
+
 # formatting helpers
 define NEWLINE :=
 
