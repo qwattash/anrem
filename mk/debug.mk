@@ -21,32 +21,33 @@ $(foreach v,$(.VARIABLES),\
 ############# testing stuff
 
 $(warning TESTING)
-ANREM_CURRENT_MODULE := abetterpath
 
-
-
-$(!@)
-$(@)pippo := something
-$(@)pluto := not_existing
-$(@)existing := myfoo
-$(@)missing := missing
-$(@)foo[something] := myfoo
-$(@)foo[else] := mybaz
-$(@!)
-
-$(foreach k,$(call anrem-dict-keys, @foo),\
-	$(info $(k), $(@foo[$(k)]))\
-)
-
-$(foreach k,$(call anrem-dict-items, @foo),\
-	$(info item: $(k))\
-)
-
-$(info haskey yes -$(call anrem-dict-has-key, @foo, @pippo)-)
-$(info haskey no -$(call anrem-dict-has-key, @foo, @pluto)-)
-
-$(info in yes -$(call anrem-dict-in, @foo, @existing)-)
-$(info in no -$(call anrem-dict-in, @foo, @missing)-)
-
-$(info key4 yes -$(call anrem-dict-key-for, @foo, @existing)-)
-$(info key4 no -$(call anrem-dict-key-for, @foo, @missing)-)
+#ANREM_CURRENT_MODULE := abetterpath
+#
+#
+#
+#$(!@)
+#$(@)pippo := something
+#$(@)pluto := not_existing
+#$(@)existing := myfoo
+#$(@)missing := missing
+#$(@)foo[something] := myfoo
+#$(@)foo[else] := mybaz
+#$(@!)
+#
+#$(foreach k,$(call anrem-dict-keys, @foo),\
+#	$(info $(k), $(@foo[$(k)]))\
+#)
+#
+#$(foreach k,$(call anrem-dict-items, @foo),\
+#	$(info item: $(k))\
+#)
+#
+#$(info haskey yes -$(call anrem-dict-has-key, @foo, @pippo)-)
+#$(info haskey no -$(call anrem-dict-has-key, @foo, @pluto)-)
+#
+#$(info in yes -$(call anrem-dict-in, @foo, @existing)-)
+#$(info in no -$(call anrem-dict-in, @foo, @missing)-)
+#
+#$(info key4 yes -$(call anrem-dict-key-for, @foo, @existing)-)
+#$(info key4 no -$(call anrem-dict-key-for, @foo, @missing)-)

@@ -5,6 +5,12 @@
 # define the module path variables
 # 
 
+
+#
+# remove dir calls and use anrem-path-dir instead
+#
+
+
 #
 # some constant that are not meant to be 
 # configurable by the user
@@ -112,14 +118,32 @@ endef
 # @param $1 path to the mk of the module to be checked
 # @returns $(TRUE) if the module should be exported, $(FALSE) if not
 #
+
 define anrem-mod-check-register =
 $(strip \
-	$(if $(or $(filter $(dir $1), $(ANREM_EXPORTED_MODULES)),$(filter $(dir $1), $(ANREM_EXCLUDE_MODULES))),\
-		$(FALSE),\
-		$(if $(filter _%,$(call anrem-path-filename, $1)),\
-			$(call anrem-mod-exclude, $(anrem-mod-discover-module))\
-			$(FALSE),\
-			$(TRUE)
+	$(foreach anrem-mod-check-register-mk, $1,\
+		$(if $(call anrem-mod-check-parse, $(anrem-mod-check-register-mk))\
+			$(eval anrem-mod-check-register-final-mk := $(anrem-mod-check-register-mk)),\
+			$(NOP)\
+		)\
+	)\
+	$(if \
+		$(or \
+			$(filter $(call anrem-path-dir, $(anrem-mod-check-register-final-mk)), $(ANREM_EXPORTED_MODULES)), \
+			$(filter $(call anrem-path-dir, $(anrem-mod-check-register-final-mk)), $(ANREM_EXCLUDE_MODULES))
+		)
+		,\
+		$(FALSE)
+		,\
+		$(if $(call anrem-ns-is-namespace, $(call anrem-path-dir, $(anrem-mod-check-register-final-mk))),\
+			$(info mod:check-register is NS)\
+			$(FALSE)\
+			,\
+			$(if $(filter _%,$(call anrem-path-filename, $(anrem-mod-check-register-final-mk))),\
+				$(call anrem-mod-exclude, $(anrem-mod-discover-module))\
+				$(FALSE),\
+				$(TRUE)\
+			)\
 		)\
 	)\
 )
@@ -280,6 +304,20 @@ $($(strip $1)|$(strip $2))
 endef
 
 #
+# Test if a given path is a known namespace
+# @param $1 namespace path
+# @returns $(TRUE) if the path is a namespace, $(FALSE) otherwise
+#
+define anrem-ns-is-namespace =
+$(strip \
+	$(if $(call anrem-dict-in, ANREM_PROJECTS, $1),\
+		$(TRUE),\
+		$(FALSE)\
+	)\
+)
+endef
+
+#
 # Import scope files from all paths
 # The scope files define custom namespaces and 
 # ingore paths
@@ -333,11 +371,28 @@ $(if $(filter $(anrem-ns-register-project-name), $(call anrem-dict-keys, ANREM_P
 		$(info ns:register ns already existing and conflicting)\
 		$(call anrem-ns-amend, $(anrem-ns-register-project-name), $1)\
 	),\
-	$(info ns:register new namespace)\
-	$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
-	$(call anrem-ns-ignore, $(strip $1)/$(ANREM_MOD_PRIVATE_MK_DIR))\
-	$(info ns:register dump ignore paths: $(ANREM_IGNORE_PATH))\
+	$(if $(filter $1, $(call anrem-dict-items, ANREM_PROJECTS)),\
+		$(info ns:register path already registered with another name)\
+		$(NOP)\
+		,\
+		$(info ns:register new namespace)\
+		$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
+		$(call anrem-ns-base-var, $(anrem-ns-register-project-name), $(strip $1))\
+		$(call anrem-ns-ignore, $(strip $1)/$(ANREM_MOD_PRIVATE_MK_DIR))\
+		$(info ns:register dump ignore paths: $(ANREM_IGNORE_PATH))\
+	)\
 )
+endef
+
+#
+# Define the module base path variable
+# The variable is named after the project (ns) name preceded by |
+# i.e. namespace = mynamespace the var will be |mynamespace
+# @param $1 the namespace name
+# @param $2 the namespace path (variable content)
+#
+define anrem-ns-base-var =
+$(eval |$(strip $1) := $(strip $2))
 endef
 
 #

@@ -90,6 +90,17 @@ $(strip \
 )
 endef
 
+#
+# Given a path returns a clean path name
+# without repeated / and not ending with
+# @param $1 the path to evaluate
+# @returns a clean path
+#
+define anrem-path-dir =
+$(patsubst %/,%,$(dir $1))
+endef
+
+
 ################ Dictionary (associative array)
 
 #

@@ -454,10 +454,10 @@ $(call anrem-warn, Test AssertFileNotExist)
 
 
 $(rst)
-$(call anrem-assert-exists, This should fail,)
+$(call anrem-assert-not-exists, Null file does not exist,$(NULL))
 tmp := $(read)
 
-$(if $(call grep, FAIL, $(tmp)), \
+$(if $(call grep, PASS, $(tmp)), \
 	$(call anrem-pass, Assert strict eq: pass test case <pass status>), \
 	$(call anrem-fail, Assert strict eq: pass test case <pass status>)\
 )

@@ -282,7 +282,7 @@ endef
 # file exists
 define anrem-assert-exists = 
 $(strip \
-	$(if $(shell if [ -e "$2" ]; then echo "1"; fi),\
+	$(if $(shell if [ -e "$(strip $2)" ]; then echo "1"; fi),\
 		$(call anrem-pass, $1),\
 		$(call anrem-test-fail, $1, File does not exist,'$2','No file')\
 	)\
@@ -292,7 +292,7 @@ endef
 # file does not exist
 define anrem-assert-not-exists = 
 $(strip \
-	$(if $(shell if [ -e "$2" ]; then echo "1"; fi),\
+	$(if $(shell if [ -e "$(strip $2)" ]; then echo "1"; fi),\
 		$(call anrem-test-fail, $1, File exist,'No file','$2'),\
 		$(call anrem-pass, $1)\
 	)\
