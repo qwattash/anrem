@@ -47,7 +47,7 @@ ANREM_BUILD_TARGETS :=
 ANREM_BUILD_CLEAN :=
 
 #same as BUILD_CLEAN but for test stuff
-ANREM_TEST_CLEAN :=
+ANREM_TEST_CLEAN_TARGETS :=
 
 #user defined test targets list
 ANREM_TEST_TARGETS :=
