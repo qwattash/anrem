@@ -13,14 +13,14 @@
 #
 $(foreach v,$(.VARIABLES),\
 	$(if $(findstring |,$(v)),\
-		$(info debug:module-var: $(v)),\
+		$(warning debug:module-var: $(v)),\
 		$(NOP)\
 	)\
 )
 
 ############# testing stuff
 
-$(warning TESTING)
+#$(warning TESTING)
 
 #ANREM_CURRENT_MODULE := abetterpath
 #

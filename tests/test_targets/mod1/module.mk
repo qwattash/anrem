@@ -9,10 +9,10 @@ $(call anrem-target, $(addprefix $(CURRENT)/,hello_target)):
 	touch $@
 
 $(call anrem-clean, $(CURRENT)_hello_clean):
-	rm $(addprefix $(CURRENT)/,hello_build hello_target)
+	rm $(addprefix $(path)/,hello_build hello_target)
 
 $(call anrem-test, $(addprefix $(CURRENT)/,hello_test)):
 	touch $@
 
 $(call anrem-test-clean, $(CURRENT)_hello_test_clean):
-	rm $(addprefix $(CURRENT)/,hello_test)
+	rm $(addprefix $(path)/,hello_test)

@@ -1,0 +1,4 @@
+make[2]: Entering directory '/home/qwattash/git/anrem/tests/test_targets'
+rm ./mod1/hello_build ./mod1/hello_target
+rm ./mod2/hello_build ./mod2/hello_target
+make[2]: Leaving directory '/home/qwattash/git/anrem/tests/test_targets'

@@ -26,11 +26,11 @@ ANREM_MOD_PRIVATE_MK_DIR := mk
 # @param $1 a list of paths that are candidate positions for modules
 #
 define anrem-process-modules =
-$(info main:process DISCOVER NS)\
+$(warning main:process DISCOVER NS)\
 $(call anrem-ns-discover, $1)\
-$(info main:process DISCOVER MODULES)\
+$(warning main:process DISCOVER MODULES)\
 $(call anrem-mod-discover, $1)\
-$(info main:process INCLUDE)\
+$(warning main:process INCLUDE)\
 $(call anrem-include-modules, $1)
 endef
 
@@ -95,16 +95,16 @@ endef
 # $(FALSE) if the module shall be ignored
 define anrem-mod-check-ignore =
 $(strip \
-	$(info mod:check-ignore checking $(strip $1))\
+	$(warning mod:check-ignore checking $(strip $1))\
 	$(eval anrem-mod-check-ignore-result := $(TRUE))\
 	$(foreach anrem-mod-check-ignore-path,$(ANREM_IGNORE_PATH),\
-		$(info mod:check-ignore test against $(anrem-mod-check-ignore-path))\
+		$(warning mod:check-ignore test against $(anrem-mod-check-ignore-path))\
 		$(if $(call anrem-path-is-prefix, $(anrem-mod-check-ignore-path), $1),\
 			$(eval anrem-mod-check-ignore-result := $(FALSE)),\
 			$(NOP)\
 		)\
 	)\
-	$(info mod:check-ignore answer: -$(anrem-mod-check-ignore-result)-)\
+	$(warning mod:check-ignore answer: -$(anrem-mod-check-ignore-result)-)\
 	$(anrem-mod-check-ignore-result)\
 )
 endef
@@ -136,7 +136,7 @@ $(strip \
 		$(FALSE)
 		,\
 		$(if $(call anrem-ns-is-namespace, $(call anrem-path-dir, $(anrem-mod-check-register-final-mk))),\
-			$(info mod:check-register is NS)\
+			$(warning mod:check-register is NS)\
 			$(FALSE)\
 			,\
 			$(if $(filter _%,$(call anrem-path-filename, $(anrem-mod-check-register-final-mk))),\
@@ -166,12 +166,12 @@ endef
 #
 define anrem-mod-get-name =
 $(strip \
-	$(info mod:getname looking for name among $1)\
+	$(warning mod:getname looking for name among $1)\
 	$(eval anrem-mod-get-name-output := $(NULL))\
 	$(foreach anrem-mod-get-name-file, $1,\
-		$(info mod:getname checking $(anrem-mod-get-name-file))\
+		$(warning mod:getname checking $(anrem-mod-get-name-file))\
 		$(if $(call anrem-mod-check-file-parse, $(anrem-mod-get-name-file)),\
-			$(info mod:getname check parse OK)\
+			$(warning mod:getname check parse OK)\
 			$(if $(strip $(anrem-mod-get-name-output)),\
 				$(error Multiple mk files for a module: $(strip $1))\
 				,\
@@ -184,9 +184,9 @@ $(strip \
 					$(eval anrem-mod-get-name-output := $(call anrem-path-filename, $(anrem-mod-get-name-file)))\
 				)\
 			)\
-			$(info mod:getname set output to $(anrem-mod-get-name-output))\
+			$(warning mod:getname set output to $(anrem-mod-get-name-output))\
 			,\
-			$(info mod:getname check parse FAILED)\
+			$(warning mod:getname check parse FAILED)\
 			$(NOP)\
 		)\
 	)\
@@ -216,24 +216,24 @@ endef
 define anrem-mod-register =
 $(eval anrem-mod-register-name := $(strip $2))\
 $(eval anrem-mod-register-ns-name := $(call anrem-ns-for-path, $1))\
-$(info mod:register $(anrem-mod-register-ns-name):$(anrem-mod-register-name))\
+$(warning mod:register $(anrem-mod-register-ns-name):$(anrem-mod-register-name))\
 $(if $(strip $(anrem-mod-register-ns-name)),\
-	$(info mod:register ENTER state of ns map dict: keys [$(call anrem-dict-keys, $(anrem-mod-register-ns-name))])\
+	$(warning mod:register ENTER state of ns map dict: keys [$(call anrem-dict-keys, $(anrem-mod-register-ns-name))])\
 	$(if $(call anrem-dict-has-key, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),\
 		$(if \
 			$(filter $(anrem-dict-get, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),$1)\
 			,\
 			$(NOP)\
 			,\
-			$(info mod:register existing)\
+			$(warning mod:register existing)\
 			$(call anrem-ns-amend-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name), $1),\
 		),\
-		$(info mod:register new)\
+		$(warning mod:register new)\
 		$(call anrem-ns-add-var, $(anrem-mod-register-ns-name), $(anrem-mod-register-name), $1)\
 	)\
-	$(info mod:register EXIT state of ns map dict: keys [$(call anrem-dict-keys, $(anrem-mod-register-ns-name))])\
+	$(warning mod:register EXIT state of ns map dict: keys [$(call anrem-dict-keys, $(anrem-mod-register-ns-name))])\
 	,\
-	$(info mod:register invalid ns!)\
+	$(warning mod:register invalid ns!)\
 	$(NOP)\
 )
 endef
@@ -253,17 +253,17 @@ endef
 define anrem-mod-discover = 
 $(foreach anrem-mod-discover-module, $1,\
 	$(eval anrem-mod-discover-mk := $(wildcard $(anrem-mod-discover-module)/*.mk))\
-	$(info mod:discover candidate $(anrem-mod-discover-module) mk $(anrem-mod-discover-mk))\
+	$(warning mod:discover candidate $(anrem-mod-discover-module) mk $(anrem-mod-discover-mk))\
 	$(if $(call anrem-mod-check-ignore, $(anrem-mod-discover-module)),\
 		$(if $(call anrem-mod-check-register, $(anrem-mod-discover-mk)),\
 			$(eval anrem-mod-discover-name := $(call anrem-mod-get-name, $(anrem-mod-discover-mk)))\
-			$(info mod:discover module name $(anrem-mod-discover-name))\
+			$(warning mod:discover module name $(anrem-mod-discover-name))\
 			$(call anrem-mod-register, $(anrem-mod-discover-module), $(anrem-mod-discover-name))\
 			,\
-			$(info mod:discover rejected in register check)\
+			$(warning mod:discover rejected in register check)\
 			$(NOP)\
 		),\
-		$(info mod:discover ignored)\
+		$(warning mod:discover ignored)\
 		$(NOP)\
 	)\
 )
@@ -342,9 +342,9 @@ endef
 define anrem-ns-discover =
 $(call anrem-ns-import-scope, $1)\
 $(foreach anrem-ns-discover-candidate,$(strip $1),\
-	$(info ns:discover candidate $(anrem-ns-discover-candidate))\
+	$(warning ns:discover candidate $(anrem-ns-discover-candidate))\
 	$(eval anrem-ns-discover-mk := $(wildcard $(anrem-ns-discover-candidate)/*.mk))\
-	$(info ns:discover candidate mk $(anrem-ns-discover-mk))\
+	$(warning ns:discover candidate mk $(anrem-ns-discover-mk))\
 	$(foreach anrem-ns-discover-mk-candidate, $(anrem-ns-discover-mk),\
 		$(if $(filter $(ANREM_MOD_PROJECT_FILE),$(call anrem-path-filename, $(anrem-ns-discover-mk-candidate))),\
 			$(call anrem-ns-register, $(anrem-ns-discover-candidate)),\
@@ -363,23 +363,23 @@ endef
 #
 define anrem-ns-register =
 $(eval anrem-ns-register-project-name := $(call anrem-optarg,$2,$(call anrem-path-filename, $1)))\
-$(info ns:register registering: $1 with name $(anrem-ns-register-project-name))\
+$(warning ns:register registering: $1 with name $(anrem-ns-register-project-name))\
 $(if $(filter $(anrem-ns-register-project-name), $(call anrem-dict-keys, ANREM_PROJECTS)),\
 	$(if $(filter $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-register-project-name)), $1),\
-		$(info ns:register ns already existing, NOP)\
+		$(warning ns:register ns already existing, NOP)\
 		$(NOP),\
-		$(info ns:register ns already existing and conflicting)\
+		$(warning ns:register ns already existing and conflicting)\
 		$(call anrem-ns-amend, $(anrem-ns-register-project-name), $1)\
 	),\
 	$(if $(filter $1, $(call anrem-dict-items, ANREM_PROJECTS)),\
-		$(info ns:register path already registered with another name)\
+		$(warning ns:register path already registered with another name)\
 		$(NOP)\
 		,\
-		$(info ns:register new namespace)\
+		$(warning ns:register new namespace)\
 		$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
 		$(call anrem-ns-base-var, $(anrem-ns-register-project-name), $(strip $1))\
 		$(call anrem-ns-ignore, $(strip $1)/$(ANREM_MOD_PRIVATE_MK_DIR))\
-		$(info ns:register dump ignore paths: $(ANREM_IGNORE_PATH))\
+		$(warning ns:register dump ignore paths: $(ANREM_IGNORE_PATH))\
 	)\
 )
 endef
@@ -417,12 +417,12 @@ endef
 define anrem-ns-for-path =
 $(strip \
 	$(eval anrem-ns-for-path-candidate := $(NULL))\
-	$(info ns:ns4path checking $1)\
+	$(warning ns:ns4path checking $1)\
 	$(foreach anrem-ns-for-path-item, $(call anrem-dict-items, ANREM_PROJECTS),\
-		$(info ns:ns4path is prefix $(anrem-ns-for-path-item) $1)\
+		$(warning ns:ns4path is prefix $(anrem-ns-for-path-item) $1)\
 		$(if $(call anrem-path-is-prefix, $(anrem-ns-for-path-item), $1),\
-			$(info true)\
-			$(info ns:ns4path is prefix $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-for-path-candidate)) $(anrem-ns-for-path-item))\
+			$(warning true)\
+			$(warning ns:ns4path is prefix $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-for-path-candidate)) $(anrem-ns-for-path-item))\
 			$(if $(call anrem-path-is-prefix, $(call anrem-dict-get, ANREM_PROJECTS, $(anrem-ns-for-path-candidate)), $(anrem-ns-for-path-item)),\
 				$(eval anrem-ns-for-path-candidate := $(strip $(call anrem-dict-key-for, ANREM_PROJECTS, $(anrem-ns-for-path-item)))),\
 				$(NOP)\

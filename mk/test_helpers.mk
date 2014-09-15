@@ -93,11 +93,20 @@ $(call anrem-test-echo, [.] $(strip $1), anrem-make-yellow)
 endef
 
 # this is a variant of anrem warn designed to be called inside test rules
-# @TODO is this deprecated??
 #
-define anrem-msg = 
-$(strip @echo -e "$(anrem-term-yellow)[.] $(strip $1) $(anrem-term-end)" && \
+define anrem-warn-sh = 
+$(strip echo -e "$(anrem-term-yellow)[.] $(strip $1) $(anrem-term-end)" && \
 echo "$(call anrem-log-prefix)[.] $(strip $1)" >> $(ANREM_TEST_LOG_FILE))
+endef
+
+define anrem-pass-sh = 
+$(strip echo -e "$(anrem-term-green)[+] $(strip $1) $(anrem-term-end)" && \
+echo "$(call anrem-log-prefix)[+] $(strip $1)" >> $(ANREM_TEST_LOG_FILE))
+endef
+
+define anrem-fail-sh = 
+$(strip echo -e "$(anrem-term-red)[-] $(strip $1) $(anrem-term-end)" && \
+echo "$(call anrem-log-prefix)[-] $(strip $1)" >> $(ANREM_TEST_LOG_FILE))
 endef
 
 #
@@ -297,4 +306,16 @@ $(strip \
 		$(call anrem-pass, $1)\
 	)\
 )
+endef
+
+## assertion for different files to be used in shell
+# @param $1 file 1
+# @param $2 file 2
+#
+define anrem-assert-diff-sh =
+if [[ -z $$(diff -N $1 $2) ]]; then \
+	$(call anrem-pass-sh, Files $1 and $2 are equal);\
+else \
+	$(call anrem-fail-sh, Difference among $1 and $2);\
+fi
 endef

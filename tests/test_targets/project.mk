@@ -65,3 +65,14 @@ test_main:
 	$(call anrem-assert-same-list, Registration in the test clean list, $(ANREM_TEST_CLEAN_TARGETS), test_clean_dummy_current__)
 	$(call anrem-assert-eq, Generation of test target custom name, $(call anrem-test-clean, custom_test), custom_test)
 	$(call anrem-assert-same-list, Registration in the test clean list, $(ANREM_TEST_CLEAN_TARGETS), custom_test test_clean_dummy_current__)
+# test output of building functions
+	@make -C . > build_output.txt
+	@$(call anrem-assert-diff-sh, build_output.txt, build_output.sample)
+	@make clean -C . > clean_output.txt
+	@$(call anrem-assert-diff-sh, clean_output.txt, clean_output.sample)
+	@make test -C . > test_output.txt
+	@$(call anrem-assert-diff-sh, test_output.txt, test_output.sample)
+	@make testclean -C . > test_clean_output.txt
+	@$(call anrem-assert-diff-sh, test_clean_output.txt, test_clean_output.sample)
+
+
