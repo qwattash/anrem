@@ -1,1 +1,4 @@
 hello
+*.txt
+*.o
+*.d

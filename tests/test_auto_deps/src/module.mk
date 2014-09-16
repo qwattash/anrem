@@ -15,7 +15,7 @@ obj1 := $(addprefix $(CURRENT)/, hello.o world.o)
 
 obj2 :=  $(addprefix $(CURRENT)/, name.o say.o)
 
-$(call anrem-build, $(tgts)): $(obj1) $(obj2)
+$(call anrem-target, $(tgts)): $(obj1) $(obj2)
 	$(CC) -o $@ $^
 
 $(call anrem-clean):
@@ -23,25 +23,17 @@ $(call anrem-clean):
 	rm -f $(obj1)
 	rm -f $(obj2)
 
-#$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj1))
-#	gcc -c -o $@ $<
-#	@echo "group1"
-
-#$(call anrem-auto-target, %.o, %.c, $(FALSE), $(obj2))
-#	gcc -c -o $@ $<
-#	@echo "group2"
-
 $(call anrem-target, $(obj2)): %.o: %.c
 	$(call anrem-mkdeps, $@, $<)
 	gcc -c -o $@ $<
-	@echo "solution 3 grp 2"
+	@echo "group 2"
 
 # custom hook, for signature see anrem-hook-makedepend in mk/hooks.mk
 define some_hook =
-gcc -MM -MP -MT $1 -MF $2 $3
+gcc -MM -MP -MT $1 -MF $2 $3 && echo "custom-hook tgt $(strip $1) file $(strip $2) for $(strip $3)"
 endef
 
 $(call anrem-target, $(obj1)): %.o: %.c
 	$(call anrem-mkdeps, $@, $<, some_hook)
 	gcc -c -o $@ $<
-	@echo "solution 3 grp 1"
+	@echo "group 1"

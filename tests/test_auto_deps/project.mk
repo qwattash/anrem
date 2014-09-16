@@ -1,15 +1,34 @@
-###################
 #
-# mk file for a test tree
-# This file defines the make strategy for a subproject, in this case a test subproject
-# In practice it tells anrem if the subproject tree should be traversed 
+# This test is meant to be run in a separate make environment
 #
-###################
+#
+
+#################################
+# Fixture: test automatic dependendencies generation
+#
+
+# load helpers in the recursive make environment
+$(call anrem-test-load-helpers)
+
+# enable test logging
+$(call anrem-test-set-log, test.log)
 
 ## register the main test target for the nested module
-$(call anrem-test):
-       $(call anrem-msg, Beginning self-test in $(TEST_BASE))
-#      Testing is done with recursive make, this is ok because each test fixture is
-#      designed to be self contained in a separate anrem project
-       for test_project in $$(ls $(TEST_BASE) | grep "test_.*"); do cd $(TEST_BASE)/$$test_project && make && cd ..; done
-       $$(call anrem-msg, End of self-test)
+test_main: src/hello
+# check that deps are generated for both groups
+	@$(call anrem-assert-diff-sh, src/.deps/hello.d, src/hello.d.sample)
+	@$(call anrem-assert-diff-sh, src/.deps/world.d, src/world.d.sample)
+	@$(call anrem-assert-diff-sh, src/.deps/say.d, src/say.d.sample)
+	@$(call anrem-assert-diff-sh, src/.deps/name.d, src/name.d.sample)
+# check that compiled is built
+	$(call anrem-assert-file-exist, Build output completed, hello)
+# check depclean target
+	@make depclean -C . > /dev/null
+	$(call anrem-assert-not-exists-sh, hello.d, src/.deps/hello.d)
+	$(call anrem-assert-not-exists-sh, world.d, src/.deps/world.d)
+	$(call anrem-assert-not-exists-sh, say.d, src/.deps/say.d)
+	$(call anrem-assert-not-exists-sh, name.d, src/.deps/name.d)
+# check custom hook
+	@make clean -C . > /dev/null
+	@make src/hello -C . > build_output.txt
+	@$(call anrem-assert-diff-sh, build_output.txt, build_output.sample)

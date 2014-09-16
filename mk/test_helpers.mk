@@ -308,6 +308,17 @@ $(strip \
 )
 endef
 
+# shell variant of file does not exist
+define anrem-assert-not-exists-sh = 
+$(strip \
+	@if [ -e "$(strip $2)" ]; then \
+		$(call anrem-fail-sh, $1: File found $2); \
+	else \
+		$(call anrem-pass-sh, $1: File $2 not found); \
+	fi\
+)
+endef
+
 ## assertion for different files to be used in shell
 # @param $1 file 1
 # @param $2 file 2
