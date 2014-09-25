@@ -21,14 +21,15 @@ endef
 # @param $1: group ID
 # @param $2: target list
 define anrem-target-group-add = 
-$(eval \
-	$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)): $(strip $(call anrem-expand-local, $2))\
-)\
-$(eval GROUP_ITEMS_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)) += $(strip $(call anrem-expand-local, $2)))\
-$(eval GROUP_MODULES_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)) := \
-	$(sort \
-		$(GROUP_MODULES_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1))) $(call anrem-current-path)\
+$(strip \
+	$(eval anrem-target-group-add-name := $(strip $(call anrem-target-group-build-name, $(call anrem-expand-local, $1))))\
+	$(eval \
+		$(anrem-target-group-add-name): $(strip $(call anrem-expand-local, $2))\
 	)\
+	$(eval GROUP_ITEMS[$(anrem-target-group-add-name)] += $(strip $(call anrem-expand-local, $2)))\
+	$(eval GROUP_MODULES[$(anrem-target-group-add-name)] += $(strip $(call anrem-current-path)))\
+	$(call anrem-list-unique, GROUP_MODULES[$(anrem-target-group-add-name)])\
+	$(call anrem-list-unique, GROUP_ITEMS[$(anrem-target-group-add-name)])\
 )
 endef
 
@@ -45,7 +46,7 @@ endef
 # get target group members
 # @param $1: group ID
 define anrem-target-group-members =
-$(GROUP_ITEMS_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)))
+$(call anrem-dict-get, GROUP_ITEMS, $(call anrem-target-group-build-name, $(call anrem-expand-local, $1)))
 endef
 
 #
@@ -54,5 +55,5 @@ endef
 # build -I flags
 # @param $1: group ID
 define anrem-target-group-modules =
-$(GROUP_MODULES_$(call anrem-target-group-build-name, $(call anrem-expand-local, $1)))
+$(call anrem-dict-get, GROUP_MODULES, $(call anrem-target-group-build-name, $(call anrem-expand-local, $1)))
 endef

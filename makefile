@@ -56,8 +56,3 @@ $(call anrem-process-modules,$(ANREM_MODULES))
 # include ANREM specific targets
 #
 include $(ANREM_COMPONENTS)/targets.mk
-
-#
-# include debug file
-#
--include $(ANREM_COMPONENTS)/debug.mk

@@ -40,6 +40,14 @@ $(anrem-list-reverse-out)\
 )
 endef
 
+#
+# Remove duplicates from list
+# @param $1 list variable name
+#
+define anrem-list-unique =
+$(eval $1 := $(sort $($(strip $1))))
+endef
+
 ############# path operations
 
 #

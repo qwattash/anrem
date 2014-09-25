@@ -189,7 +189,7 @@ define anrem-assert-seq =
 $(strip \
 	$(if $(shell if [ "$2" = "$3" ]; then echo "1"; fi),\
 		$(call anrem-pass, $1),\
-		$(call anrem-test-fail, $1, Not strictly equal,'$2','$3')\
+		$(call anrem-test-fail, $1, Not strictly equal,'$3','$2')\
 	)\
 )
 endef
@@ -203,7 +203,7 @@ define anrem-assert-eq =
 $(strip \
 	$(if $(shell if [ "$(strip $2)" = "$(strip $3)" ]; then echo "1"; fi),\
 		$(call anrem-pass, $1),\
-		$(call anrem-test-fail, $1, Not equal,'$2','$3')\
+		$(call anrem-test-fail, $1, Not equal,'$3','$2')\
 	)\
 )
 endef
@@ -212,7 +212,7 @@ define anrem-assert-neq =
 $(strip \
 	$(if $(shell if [ "$(strip $2)" != "$(strip $3)" ]; then echo "1"; fi),\
 		$(call anrem-pass, $1),\
-		$(call anrem-test-fail, $1, Equal,not '$2','$3')\
+		$(call anrem-test-fail, $1, Equal,not '$3','$2')\
 	)\
 )
 endef
