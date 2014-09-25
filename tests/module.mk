@@ -49,7 +49,7 @@ $(call anrem-target, test-autodeps):
 	$(call anrem-msg, Test $(TEST_BASE)/test_auto_deps)
 # assume the targets to be working
 	@make clean -C $(TEST_BASE)/test_auto_deps > /dev/null
-b2# assume the depclean to be working, in any case this would throw an error in this test
+# assume the depclean to be working, in any case this would throw an error in this test
 	@make depclean -C $(TEST_BASE)/test_auto_deps > /dev/null
 	@make test_main -C $(TEST_BASE)/test_auto_deps
 	$(call anrem-msg, End of $(TEST_BASE)/test_auto_deps)
