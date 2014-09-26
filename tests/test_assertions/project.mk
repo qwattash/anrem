@@ -28,17 +28,30 @@ define read =
 $(shell cat test.log)
 endef
 
-define find =
-$(shell cat test.log | grep "$(strip $1)")
-endef
-
 define grep =
 $(strip \
 	$(shell echo -e "$(strip $2)" | grep "$(strip $1)")\
 )
 endef
 
+define rst-sh =
+@echo -e "" > test.log
+endef
+
+define check-sh =
+@if [[ -n "$$(grep $(strip $1) test.log)" ]];\
+then\
+	$(call anrem-pass-sh,$2);\
+else\
+	$(call anrem-fail-sh,$3);\
+fi
+endef
+
 # test the assertions
+
+# test_main target contains 'in_recipe_tests', as a prerequisite,
+# which tests assertions used inside recipes
+test_main: in_recipe_tests
 
 # NOTE
 # anrem pass, fail, warn and msg are assumed to be
@@ -494,3 +507,37 @@ $(if $(call grep, PASS, $(tmp)), \
 	$(call anrem-pass, Assert strict eq: pass test case <pass status>), \
 	$(call anrem-fail, Assert strict eq: pass test case <pass status>)\
 )
+
+################ In Recipes Tests
+in_recipe_tests:
+
+################ Assert File Diff
+	@$(call anrem-warn-sh, Test AssertFileDiff)
+
+
+	$(rst-sh)
+	@$(call anrem-assert-diff-sh,project.mk,project.mk)
+
+	$(call check-sh, equal,\
+	Assert strict eq: pass test case <pass status>,\
+	Assert strict eq: pass test case <pass status>)
+
+########################
+
+	$(rst-sh)
+	@$(call anrem-assert-diff-sh,project.mk,makefile)
+
+	$(call check-sh, Difference,\
+	Assert strict eq: pass test case <pass status>,\
+	Assert strict eq: pass test case <pass status>)
+
+########################
+
+	$(rst-sh)
+	@$(call anrem-assert-diff-sh,project.mk,unexisting)
+
+	$(call check-sh, Difference,\
+	Assert strict eq: pass test case <pass status>,\
+	Assert strict eq: pass test case <pass status>)
+
+######################
