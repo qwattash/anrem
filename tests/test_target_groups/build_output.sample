@@ -1,0 +1,6 @@
+make[2]: Entering directory '/home/qwattash/git/anrem/tests/test_target_groups'
+cc -c -o build/hello.o -I ./subscriber1 -I ./subscriber2 build/hello.c
+cc -c -o subscriber1/mod1.o subscriber1/mod1.c
+cc -c -o subscriber2/mod2.o subscriber2/mod2.c
+cc -o build/hello build/hello.o ./subscriber1/mod1.o ./subscriber2/mod2.o
+make[2]: Leaving directory '/home/qwattash/git/anrem/tests/test_target_groups'

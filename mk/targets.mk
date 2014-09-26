@@ -12,5 +12,7 @@ clean: $(ANREM_BUILD_CLEAN)
 
 test: $(ANREM_TEST_TARGETS)
 
+testclean: $(ANREM_TEST_CLEAN_TARGETS)
+
 depclean:
-	find . -path "*.deps/*.d" -type f | xargs rm
+	find . -path "*.deps/*.d" -type f | xargs -r rm

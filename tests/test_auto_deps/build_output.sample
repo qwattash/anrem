@@ -1,0 +1,17 @@
+make[2]: Entering directory '/home/qwattash/git/anrem/tests/test_auto_deps'
+gcc -MM -MP -MT  src/hello.o -MF  ./src/.deps/hello.d  src/hello.c  && echo "custom-hook tgt src/hello.o file ./src/.deps/hello.d for src/hello.c"
+custom-hook tgt src/hello.o file ./src/.deps/hello.d for src/hello.c
+gcc -c -o src/hello.o src/hello.c
+group 1
+gcc -MM -MP -MT  src/world.o -MF  ./src/.deps/world.d  src/world.c  && echo "custom-hook tgt src/world.o file ./src/.deps/world.d for src/world.c"
+custom-hook tgt src/world.o file ./src/.deps/world.d for src/world.c
+gcc -c -o src/world.o src/world.c
+group 1
+gcc -MM -MP -MT  src/name.o -MF  ./src/.deps/name.d  src/name.c 
+gcc -c -o src/name.o src/name.c
+group 2
+gcc -MM -MP -MT  src/say.o -MF  ./src/.deps/say.d  src/say.c 
+gcc -c -o src/say.o src/say.c
+group 2
+cc -o src/hello src/hello.o src/world.o src/name.o src/say.o
+make[2]: Leaving directory '/home/qwattash/git/anrem/tests/test_auto_deps'

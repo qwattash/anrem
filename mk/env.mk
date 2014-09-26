@@ -9,9 +9,14 @@ ANREM_TOP := $(shell pwd)
 
 #list of modules to be traversed during the inclusion phase
 #see http://perldoc.perl.org/perlre.html#Extended-Patterns
+#
+# The regex takes the file paths preceded by a ./ and followed by the end of the line
+# this matches the output format of the directories given by ls -Rl
+#
+#
 ANREM_MODULES := $(strip \
 $(filter-out $(ANREM_COMPONENTS),\
-	$(foreach _MODULE, $(shell ls -Rl | grep -oP "(?<=^\.\/)[A-Za-z0-9\/_-]*(?=:$$)"),\
+	$(foreach _MODULE, $(shell ls -Rl | grep -oP "\.[A-Za-z0-9\/_-]*(?=:$$)"),\
 		$(if $(wildcard $(_MODULE)/*.mk), $(_MODULE))\
 	)\
 )\
@@ -20,31 +25,29 @@ $(filter-out $(ANREM_COMPONENTS),\
 # this is used to signal the end of module inclusion
 ANREM_MODULE_END := __anrem_end_of_module_inclusion
 
-# ----------------------------------- MOD variables lists
+# ----------------------------------- module inclusion lists
 
-# stores names of MOD_<module_name> variables that have been exported so far
-# this is used to detect and manage clashes in module vars naming
-MOD_VAR_NAMES := $(NULL)
+# these are used to keep track of which paths should or should not
+# be evaluated and the modules that have been imported so far.
+#
+ANREM_EXCLUDE_MODULES := $(NULL)
+ANREM_EXPORTED_MODULES := $(NULL)
 
-# this is used along MOD_VAR_NAMES to keep track of modules for which a MOD
-# variable is defined
-EXPORTED_MODULES := $(NULL)
-
+#
+# this is used to record the paths to be ignored completely
+#
+ANREM_IGNORE_PATH := $(NULL)
 
 # ---------------------------- target lists
 
 #user defined targets list
 ANREM_BUILD_TARGETS :=
 
-#user defined debug targets
-#TODO not yet implemented
-DEBUG_TARGETS :=
-
 #user defined clear list
 ANREM_BUILD_CLEAN :=
 
-#same as BUILD_CLEAN but for debug stuff
-DEBUG_CLEAN :=
+#same as BUILD_CLEAN but for test stuff
+ANREM_TEST_CLEAN_TARGETS :=
 
 #user defined test targets list
 ANREM_TEST_TARGETS :=
@@ -54,8 +57,14 @@ ANREM_TEST_TARGETS :=
 # null variable useful for calling functions with null args
 NULL :=
 
+# nop: do nothing
+NOP := $(NULL)
+
 # space variable useful in some cases
 SPACE := $(NULL) $(NULL)
+
+# comma variable useful to print commas
+COMMA := ,
 
 # formatting helpers
 define NEWLINE :=

@@ -42,18 +42,15 @@ include $(ANREM_COMPONENTS)/alias.mk
 #
 # include top level project definition
 #
-include $(ANREM_TOP)/project.mk
+#include $(ANREM_TOP)/project.mk
 
 #
-# export MOD_x variables that
+# i) discover subprojects and root project
+# ii) export MOD_x variables that
 # relate a module name with its path
+# iii) include all module files
 #
-$(call anrem-mod-export,$(ANREM_MODULES))
-
-#
-# include project modules
-#
-$(call anrem-include-modules,$(ANREM_MODULES))
+$(call anrem-process-modules,$(ANREM_MODULES))
 
 #
 # include ANREM specific targets
