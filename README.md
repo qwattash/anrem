@@ -26,11 +26,10 @@ Automated Non REcursive Make
  ANREM does not build your programs automatically, you still get the last word on the makefile contents.
  ANREM helps keeping your sources organised, however it's up to you to decide how your source tree should look.
  
-# Backstage
+# /b/
  I recently decided to adopt semantic versioning (http://semver.org/), from version 0.2.2 all version number will
  assume a precise meaning.
 
-# The default good intentions
  In the system I'll try to implement everything I find useful to my own projects and try
  to keep it clean and easy. 
  
@@ -38,8 +37,8 @@ Automated Non REcursive Make
  
  Feel free to suggest features or patches :)
 
-# /b/
- Do read the license, however this is pretty much free for everyone to use.
+# License
+ MIT. Do read the license, however this is pretty much free for everyone to use.
 
 Alfredo Mazzinghi
 
