@@ -20,6 +20,9 @@ $(call anrem-test-set-log, test.log)
 # as the first mk of a namespace
 $(call anrem-assert-eq, Initial module path, $(call anrem-current-path), .)
 
+# check that the scope file was correctly seeing the path
+$(call anrem-assert-eq, Path for . in scope file, $(TEST_SCOPE_PATH_BASE), .)
+
 #
 # Check that all module and namespace variables are set
 # and have the correct path in them
@@ -33,7 +36,7 @@ $(call anrem-assert-eq, test_module_inclusion|module_2, ./src_1/module_2, $(test
 ## conflicting module in main namespace renamed
 $(call anrem-assert-eq, test_module_inclusion|conflict_module_1, ./src_2/conflicts/module_1, $(test_module_inclusion|conflict_module_1))
 
-## @TODO spotted an error, fix
+
 # renaming of a custom namespace
 $(call anrem-assert-eq, |src_1_ns_1, ./src_1/namespace_1, $(|src_1_ns_1))
 $(call anrem-assert-eq, src_1_ns_1|ns_1_module_1, ./src_1/namespace_1/ns_1_module_1, $(src_1_ns_1|ns_1_module_1))

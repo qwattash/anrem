@@ -63,7 +63,12 @@ endef
 # retrieve the current path of the module
 # useful for defining module targets
 define anrem-current-path = 
-$(strip	$(ANREM_CURRENT_MODULE))
+$(strip \
+	$(if $(anrem-ns-import-scope-path),\
+		$(anrem-ns-import-scope-path),\
+		$(ANREM_CURRENT_MODULE)\
+	)\
+)
 endef
 
 #
@@ -311,7 +316,8 @@ endef
 define anrem-ns-import-scope =
 $(foreach anrem-ns-import-scope-path,$1,\
 	$(eval -include $(anrem-ns-import-scope-path)/$(ANREM_MOD_SCOPE_FILE).mk)\
-)
+)\
+$(eval anrem-ns-import-scope-path := $(NULL))
 endef
 
 #
