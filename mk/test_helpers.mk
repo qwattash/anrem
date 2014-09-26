@@ -320,13 +320,14 @@ $(strip \
 endef
 
 ## assertion for different files to be used in shell
-# @param $1 file 1
-# @param $2 file 2
+# @param $1 assertion message
+# @param $2 file 1
+# @param $3 file 2
 #
 define anrem-assert-diff-sh =
-if [[ -z $$(diff -N $1 $2) ]]; then \
-	$(call anrem-pass-sh, Files $1 and $2 are equal);\
+if [[ -z $$(diff -N $2 $3) ]]; then \
+	$(call anrem-pass-sh, $1: Files $2 and $3 are equal);\
 else \
-	$(call anrem-fail-sh, Difference among $1 and $2);\
+	$(call anrem-fail-sh, $1: Difference among $2 and $3);\
 fi
 endef

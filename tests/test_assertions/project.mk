@@ -516,7 +516,7 @@ in_recipe_tests:
 
 
 	$(rst-sh)
-	@$(call anrem-assert-diff-sh,project.mk,project.mk)
+	@$(call anrem-assert-diff-sh, Same file, project.mk, project.mk)
 
 	$(call check-sh, equal,\
 	Assert strict eq: pass test case <pass status>,\
@@ -525,7 +525,7 @@ in_recipe_tests:
 ########################
 
 	$(rst-sh)
-	@$(call anrem-assert-diff-sh,project.mk,makefile)
+	@$(call anrem-assert-diff-sh, This should fail, project.mk, makefile)
 
 	$(call check-sh, Difference,\
 	Assert strict eq: pass test case <pass status>,\
@@ -534,7 +534,7 @@ in_recipe_tests:
 ########################
 
 	$(rst-sh)
-	@$(call anrem-assert-diff-sh,project.mk,unexisting)
+	@$(call anrem-assert-diff-sh, This should fail, project.mk, unexisting)
 
 	$(call check-sh, Difference,\
 	Assert strict eq: pass test case <pass status>,\
