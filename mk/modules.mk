@@ -358,6 +358,7 @@ $(if $(filter $(anrem-ns-register-project-name), $(call anrem-dict-keys, ANREM_P
 		$(eval ANREM_PROJECTS[$(strip $(anrem-ns-register-project-name))] := $(strip $1))\
 		$(call anrem-ns-base-var, $(anrem-ns-register-project-name), $(strip $1))\
 		$(call anrem-ns-ignore, $(strip $1)/$(ANREM_MOD_PRIVATE_MK_DIR))\
+		$(call anrem-ns-def-get-include-modules, $(anrem-ns-register-project-name))\
 	)\
 )
 endef
@@ -417,8 +418,7 @@ endef
 #
 define anrem-ns-add-var =
 $(eval $(strip $1)[$(strip $2)] := $(strip $3))\
-$(call anrem-ns-def-var, $1, $2, $3)\
-$(call anrem-ns-link, $1, $2, $3)
+$(call anrem-ns-def-var, $1, $2, $3)
 endef
 
 #
@@ -454,33 +454,27 @@ define anrem-ns-undef-var =
 $(eval undefine $(strip $1)|$(strip $2))
 endef
 
-#
-# Create softlink to the module in the
-# namespace link directory and create a variable
-# that gives the link directory for the namespace if
-# not already set
-# @param $1 project name (namespace)
-# @param $2 variable name (module name)
-# @param $3 variable value (module path)
-#
-define anrem-ns-link =
-$(if $(filter debug,$2),\
-	$(eval $(call anrem-ns-link-target, $1, $2, $3)),\
-	$(NOP)\
-)
-endef
+################## cross module inclusion system
 
 #
-# Define a target that generate the link for a given module in the
-# correct link directory
-# @param $1 project name (namespace)
-# @param $2 variable name (module name)
-# @param $3 variable value (module path)
+# Get list of pahts modules in a namespace suitable for adding
+# the modules to an inclusion list such as gcc -I path/to/include
+# The complier flag can be specified or left blank
 #
-define anrem-ns-link-target =
-$(call anrem-target-group-add, link, $(call anrem-dict-get, ANREM_PROJECTS, $1)/$(ANREM_LINK_DIR)/$(strip $2))\
-$(call anrem-dict-get, ANREM_PROJECTS, $1)/$(ANREM_LINK_DIR)/$(strip $2): $(wildcard $(abspath $(strip $3))/*)
-	@echo "running"
-	@mkdir -p $$$$(dirname $$@)
-	@ln -s -f $(abspath $(strip $3)) $$@
+# @param $1 namespace name
+# @param [$2] the compiler flag
+define anrem-ns-get-include-modules =
+$(addprefix $(strip $2), $(call anrem-dict-items, $1))
 endef
+
+
+#
+# Define a shortcut for anrem-ns-get-include-modules
+# The shortcut is defined as $(I|ns-name)
+# 
+# @param $1 namespace name
+#
+define anrem-ns-def-get-include-modules =
+$(eval I|$(strip $1) = $$(call anrem-ns-get-include-modules, $1))
+endef
+

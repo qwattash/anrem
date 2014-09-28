@@ -73,4 +73,22 @@ $(foreach v,$(.VARIABLES),\
 	)\
 )
 
-$(call anrem-assert-same-list, No other variables defined, $(module-variables), $(expected-module-variables))
+## check that the namespace dictionaries hold the correct paths
+$(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, test_module_inclusion), module_1 module_2 module_1-1 module_1-2 conflict_module_1)
+$(call anrem-assert-same-list, namespace1 dict items, $(call anrem-dict-items, test_module_inclusion),./src_1/module_1 ./src_1/module_1/module_1-2 ./src_1/module_2 \
+./src_1/module_1/module_1-1 ./src_2/conflicts/module_1)
+
+$(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, src_1_ns_1), ns_1_module_1)
+$(call anrem-assert-same-list, namespace1 dict items, $(call anrem-dict-items, src_1_ns_1), ./src_1/namespace_1/ns_1_module_1)
+
+$(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, conflict_ns_1), conflict_ns_1_module_1)
+$(call anrem-assert-same-list, namespace1 dict items, $(call anrem-dict-items, conflict_ns_1), ./src_2/conflicts/namespace_1/ns_1_module_1)
+
+$(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, namespace_2), ns_2_module_1)
+$(call anrem-assert-same-list, namespace1 dict items, $(call anrem-dict-items, namespace_2), ./src_1/namespace_2/ns_2_module_1)
+
+$(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, ns_1_namespace_1), ns_1_ns_1_module_1)
+$(call anrem-assert-same-list, namespace1 dict items, $(call anrem-dict-items, ns_1_namespace_1), ./src_1/namespace_1/ns_1_namespace_1/ns_1_ns_1_module_1)
+
+# this is disabled since other features can pollute
+#$(call anrem-assert-same-list, No other variables defined, $(module-variables), $(expected-module-variables))

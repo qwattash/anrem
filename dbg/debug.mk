@@ -1,4 +1,5 @@
 
 
-$(call anrem-target, debug): $(call anrem-target-group-depend, link)
-	$(info $(ANREM_TEST_TARGETS))
+$(call anrem-build, debug):
+	@echo "$(call anrem-ns-get-include-modules, anrem, -I)"
+	@echo "$(I|anrem)"
