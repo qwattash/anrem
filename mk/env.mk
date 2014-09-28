@@ -87,3 +87,8 @@ FALSE := $(NULL)
 
 # name of the folder in the module where the automatic dependencies are stored
 ANREM_DEPS_DIR := .deps
+
+# -------------------- cross module inclusion directory for a namespace
+
+# name of the folder in the namespace where the links to modules are stored
+ANREM_LINK_DIR := .lnk

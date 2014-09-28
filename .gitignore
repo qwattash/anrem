@@ -2,3 +2,10 @@
 *~
 *#*#
 *#*
+
+# .lnk and .deps directories
+*.lnk*
+*.deps*
+
+# object files
+*.o
