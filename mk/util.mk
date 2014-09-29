@@ -84,6 +84,15 @@ $(subst $(dir $(abspath $1)),$(NULL),$(basename $(abspath $1)))
 endef
 
 #
+# given a file path or directory path return the directory part without
+# trailing /
+# @param $1 path
+#
+define anrem-path-dir = 
+$(basename $(abspath $1))
+endef
+
+#
 # Check if a path is contained within another
 # @param $1 parent path
 # @param $2 path to be tested to see if it is a location within the parent

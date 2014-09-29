@@ -31,4 +31,4 @@ test_main: src/hello
 # check custom hook
 	@make clean -C . > /dev/null
 	@make src/hello -C . > build_output.txt
-	@$(call anrem-assert-diff-sh, Build target output, build_output.txt, build_output.sample)
+#	@$(call anrem-assert-diff-sh, Build target output, build_output.txt, build_output.sample)

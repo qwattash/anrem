@@ -441,7 +441,51 @@ endef
 # @param $3 variable value (module path)
 #
 define anrem-ns-def-var =
-$(eval $(strip $1)|$(strip $2) := $(strip $3))
+$(eval $(subst $(SPACE),|,$(strip $1) $(call anrem-list-reverse,$(call anrem-ns-module-list-for-path, $3))) := $(strip $3))
+endef
+
+#
+# Return a list of modules that hierarchically
+# identify the given path
+# Say we have modules:
+# a -> src/a
+# c -> src/a/b/c
+# the input is src/a/b/c/d/e
+# the output will be the list [a c]
+#
+# @param $1 the path to be evaluated
+# @param [$2] the top level namespace to use
+#
+define anrem-ns-module-list-for-path
+$(strip \
+	$(if $(strip $2),
+		$(eval anrem-ns-module-list-for-path-ns := $(strip $2)),\
+		$(eval anrem-ns-module-list-for-path-ns := $(call anrem-ns-for-path, $1))\
+	)\
+	$(if $(filter .,$(patsubst %/,%,$1)),\
+		$(NOP),\
+		$(call anrem-ns-module-for-path, $(patsubst %/,%,$1), $(anrem-ns-module-list-for-path-ns)) \
+		$(strip $(call anrem-ns-module-list-for-path, $(dir $(patsubst %/,%,$1)), $(anrem-ns-module-list-for-path-ns))) 
+	)\
+)
+endef
+
+#
+# check whether a given path is a module in the namespace given
+# if it is a module return the module name, otherwise return $(NULL)
+#
+# @param $1 path to be checked
+# @param $2 namespace name
+#
+define anrem-ns-module-for-path =
+$(strip \
+	$(foreach anrem-ns-module-for-path-item, $(call anrem-dict-items, $2),\
+		$(if $(filter $1, $(anrem-ns-module-for-path-item)),\
+			$(call anrem-dict-key-for, $2, $(anrem-ns-module-for-path-item)),\
+			$(NOP)\
+		)\
+	)\
+)
 endef
 
 #
