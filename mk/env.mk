@@ -2,7 +2,12 @@
 # Environment where the make process is carried on
 #
 
-# ------------------------------------ module inclusion lists and variables
+# ----------------------------- mode
+
+# valid values are tree and flat
+ANREM_MODE := tree
+
+# ----------------------------- module inclusion lists and variables
 
 # Top level directory
 ANREM_TOP := $(shell pwd)
@@ -25,7 +30,7 @@ $(filter-out $(ANREM_COMPONENTS),\
 # this is used to signal the end of module inclusion
 ANREM_MODULE_END := __anrem_end_of_module_inclusion
 
-# ----------------------------------- module inclusion lists
+# ----------------------------- module inclusion lists
 
 # these are used to keep track of which paths should or should not
 # be evaluated and the modules that have been imported so far.
@@ -38,7 +43,7 @@ ANREM_EXPORTED_MODULES := $(NULL)
 #
 ANREM_IGNORE_PATH := $(NULL)
 
-# ---------------------------- target lists
+# ----------------------------- target lists
 
 #user defined targets list
 ANREM_BUILD_TARGETS :=
@@ -52,7 +57,7 @@ ANREM_TEST_CLEAN_TARGETS :=
 #user defined test targets list
 ANREM_TEST_TARGETS :=
 
-# ------------------------------------ Auxiliary variables
+# ----------------------------- Auxiliary variables
 
 # null variable useful for calling functions with null args
 NULL :=
@@ -83,7 +88,7 @@ endef
 TRUE := T
 FALSE := $(NULL)
 
-# ------------------------------------- automatic dependencies
+# ----------------------------- automatic dependencies
 
 # name of the folder in the module where the automatic dependencies are stored
 ANREM_DEPS_DIR := .deps

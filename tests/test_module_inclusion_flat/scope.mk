@@ -4,7 +4,7 @@
 
 # this is parsed before everything else so set the anrem mode here
 # this should not be done normally, use env.mk instead
-ANREM_MODE := tree
+ANREM_MODE := flat
 
 TEST_SCOPE_PATH_BASE := $(call anrem-current-path)
 

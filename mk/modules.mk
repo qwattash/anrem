@@ -185,16 +185,44 @@ $(strip \
 			$(NOP)\
 		)\
 	)\
-	$(anrem-mod-get-name-output)\
+	$(anrem-mod-get-name-output)
 )
 endef
 
+#
+# Given a module name and module path returns the
+# final name to be used to identify the module and to define the
+# module variable inside the namespace
+# The name for module A contained in module B will be
+# B|A
+# if B is in namespace NS the variable
+# NS|B|A
+# will then be defined by anrem-mod-register to point at the module
+# If flat mode anrem is enabled the name for the same module A will be just
+# A
+# and the variable generated will be named
+# NS|A
+# This is shorter but opens the possibility of name conflicts (which are reported anyway)
+#
+# @param $1 module name
+# @param $2 module path
+#
+define anrem-mod-get-fully-qualified-name =
+$(if $(filter tree,$(ANREM_MODE)),\
+	$(subst $(SPACE),|,$(strip $(call anrem-list-reverse,$(call anrem-ns-module-list-for-path, $2)) $(strip $1)))
+	,\
+	$(if $(filter flat,$(ANREM_MODE)),\
+		$(strip $1),\
+		$(error Invalid Anrem Mode in env.mk)\
+	)\
+)
+endef
 
 #
 # Register a module within its namespace, namespace is discovered from
 # the module path
 # @param $1 path module path to be registered
-# @param [$2=<dir_name>] name of the module, defaults to the name of the directory
+# @param $2 name of the module
 #
 # Pseudocode.
 #
@@ -209,7 +237,7 @@ endef
 #	anrem-ns-add-var(projectName, name, path)
 #
 define anrem-mod-register =
-$(eval anrem-mod-register-name := $(strip $2))\
+$(eval anrem-mod-register-name := $(call anrem-mod-get-fully-qualified-name, $2, $1))\
 $(eval anrem-mod-register-ns-name := $(call anrem-ns-for-path, $1))\
 $(if $(strip $(anrem-mod-register-ns-name)),\
 	$(if $(call anrem-dict-has-key, $(anrem-mod-register-ns-name), $(anrem-mod-register-name)),\
@@ -307,15 +335,19 @@ endef
 # The scope files define custom namespaces and 
 # ingore paths
 #
-# IMPORTANT: the scope file is always imported,
-# no matter if the path where it is found has been
-# added to the ignore list.
+# IMPORTANT: the scope file is not always imported,
+# if the path had been added to the ignore list by a
+# scope file in the parent directories the ignore is
+# evaluated and taken into account
 #
 # @param $1 list of paths to scan
 #
 define anrem-ns-import-scope =
 $(foreach anrem-ns-import-scope-path,$1,\
-	$(eval -include $(anrem-ns-import-scope-path)/$(ANREM_MOD_SCOPE_FILE).mk)\
+	$(if $(call anrem-mod-check-ignore, $(anrem-ns-import-scope-path)),\
+		$(eval -include $(anrem-ns-import-scope-path)/$(ANREM_MOD_SCOPE_FILE).mk),\
+		$(NOP)\
+	)\
 )\
 $(eval anrem-ns-import-scope-path := $(NULL))
 endef
@@ -323,17 +355,28 @@ endef
 #
 # Discover projects in the current tree,
 # the projects are stored in a dictionary (see anrem-ns-register)
+#
+# IMPORTANT:
+# if the path had been added to the ignore list by a
+# scope file in the parent directories the ignore is
+# evaluated and taken into account and the namespace or project is
+# not registered
+#
 # @param $1 list of module directories to check
 #
 define anrem-ns-discover =
 $(call anrem-ns-import-scope, $1)\
 $(foreach anrem-ns-discover-candidate,$(strip $1),\
-	$(eval anrem-ns-discover-mk := $(wildcard $(anrem-ns-discover-candidate)/*.mk))\
-	$(foreach anrem-ns-discover-mk-candidate, $(anrem-ns-discover-mk),\
-		$(if $(filter $(ANREM_MOD_PROJECT_FILE),$(call anrem-path-filename, $(anrem-ns-discover-mk-candidate))),\
-			$(call anrem-ns-register, $(anrem-ns-discover-candidate)),\
-			$(NOP)\
+	$(if $(call anrem-mod-check-ignore, $(anrem-ns-discover-candidate)),\
+		$(eval anrem-ns-discover-mk := $(wildcard $(anrem-ns-discover-candidate)/*.mk))\
+		$(foreach anrem-ns-discover-mk-candidate, $(anrem-ns-discover-mk),\
+			$(if $(filter $(ANREM_MOD_PROJECT_FILE),$(call anrem-path-filename, $(anrem-ns-discover-mk-candidate))),\
+				$(call anrem-ns-register, $(anrem-ns-discover-candidate)),\
+				$(NOP)\
+			)\
 		)\
+		,\
+		$(NOP)\
 	)\
 )
 endef
@@ -441,7 +484,7 @@ endef
 # @param $3 variable value (module path)
 #
 define anrem-ns-def-var =
-$(eval $(subst $(SPACE),|,$(strip $1) $(call anrem-list-reverse,$(call anrem-ns-module-list-for-path, $3))) := $(strip $3))
+$(eval $(strip $1)|$(strip $2) := $(strip $3))
 endef
 
 #

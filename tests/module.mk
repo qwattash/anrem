@@ -36,6 +36,13 @@ $(call anrem-target, test-module-inclusion):
 	@make test -C $(TEST_BASE)/test_module_inclusion
 	$(call anrem-msg, End of $(TEST_BASE)/test_module_inclusion)
 
+$(call anrem-target, test-module-inclusion-flat):
+##	Testing is done with recursive make, this is ok because each test fixture is
+##	designed to be self contained in a separate anrem project
+	$(call anrem-msg, Test $(TEST_BASE)/test_module_inclusion_flat)
+	@make test -C $(TEST_BASE)/test_module_inclusion_flat
+	$(call anrem-msg, End of $(TEST_BASE)/test_module_inclusion_flat)
+
 $(call anrem-target, test-targets):
 ##	Testing is done with recursive make, this is ok because each test fixture is
 ##	designed to be self contained in a separate anrem project

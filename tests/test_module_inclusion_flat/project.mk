@@ -28,13 +28,13 @@ $(call anrem-assert-eq, Path for . in scope file, $(TEST_SCOPE_PATH_BASE), .)
 # and have the correct path in them
 #
 
-$(call anrem-assert-eq, |test_module_inclusion, ., $(|test_module_inclusion))
-$(call anrem-assert-eq, test_module_inclusion|module_1, ./src_1/module_1, $(test_module_inclusion|module_1))
-$(call anrem-assert-eq, test_module_inclusion|module_1|module_1-1, ./src_1/module_1/module_1-1, $(test_module_inclusion|module_1|module_1-1))
-$(call anrem-assert-eq, test_module_inclusion|module_1|module_1-2, ./src_1/module_1/module_1-2, $(test_module_inclusion|module_1|module_1-2))
-$(call anrem-assert-eq, test_module_inclusion|module_2, ./src_1/module_2, $(test_module_inclusion|module_2))
+$(call anrem-assert-eq, |test_module_inclusion_flat, ., $(|test_module_inclusion_flat))
+$(call anrem-assert-eq, test_module_inclusion_flat|module_1, ./src_1/module_1, $(test_module_inclusion_flat|module_1))
+$(call anrem-assert-eq, test_module_inclusion_flat|module_1-1, ./src_1/module_1/module_1-1, $(test_module_inclusion_flat|module_1-1))
+$(call anrem-assert-eq, test_module_inclusion_flat|module_1-2, ./src_1/module_1/module_1-2, $(test_module_inclusion_flat|module_1-2))
+$(call anrem-assert-eq, test_module_inclusion_flat|module_2, ./src_1/module_2, $(test_module_inclusion_flat|module_2))
 ## conflicting module in main namespace renamed
-$(call anrem-assert-eq, test_module_inclusion|conflict_module_1, ./src_2/conflicts/module_1, $(test_module_inclusion|conflict_module_1))
+$(call anrem-assert-eq, test_module_inclusion_flat|conflict_module_1, ./src_2/conflicts/module_1, $(test_module_inclusion_flat|conflict_module_1))
 
 
 # renaming of a custom namespace
@@ -57,14 +57,14 @@ $(call anrem-assert-eq, ns_1_namespace_1|ns_1_ns_1_module_1, ./src_1/namespace_1
 
 ## check that no other variables have been defined
 
-expected-module-variables := |test_module_inclusion test_module_inclusion|module_1 test_module_inclusion|module_2 test_module_inclusion|conflict_module_1\
- test_module_inclusion|module_1|module_1-1 test_module_inclusion|module_1|module_1-2
+expected-module-variables := |test_module_inclusion_flat test_module_inclusion_flat|module_1 test_module_inclusion_flat|module_2 test_module_inclusion_flat|conflict_module_1\
+ test_module_inclusion_flat|module_1-1 test_module_inclusion_flat|module_1-2
 expected-module-variables += |src_1_ns_1 src_1_ns_1|ns_1_module_1
 expected-module-variables += |conflict_ns_1 conflict_ns_1|conflict_ns_1_module_1
 expected-module-variables += |namespace_2 namespace_2|ns_2_module_1
 expected-module-variables += |ns_1_namespace_1 ns_1_namespace_1|ns_1_ns_1_module_1
 # namespace include shortcuts
-expected-module-variables += I|src_1_ns_1 I|conflict_ns_1 I|namespace_2 I|ns_1_namespace_1 I|test_module_inclusion
+expected-module-variables += I|src_1_ns_1 I|conflict_ns_1 I|namespace_2 I|ns_1_namespace_1 I|test_module_inclusion_flat
 
 module-variables := $(NULL)
 
@@ -82,8 +82,8 @@ $(foreach v,$(.VARIABLES),\
 $(call anrem-assert-same-list, No other variables defined, $(module-variables), $(expected-module-variables))
 
 ## check that the namespace dictionaries hold the correct paths
-$(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, test_module_inclusion), module_1 module_2 module_1|module_1-1 module_1|module_1-2 conflict_module_1)
-$(call anrem-assert-same-list, namespace1 dict items, $(call anrem-dict-items, test_module_inclusion),./src_1/module_1 ./src_1/module_1/module_1-2 ./src_1/module_2 \
+$(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, test_module_inclusion_flat), module_1 module_2 module_1-1 module_1-2 conflict_module_1)
+$(call anrem-assert-same-list, namespace1 dict items, $(call anrem-dict-items, test_module_inclusion_flat),./src_1/module_1 ./src_1/module_1/module_1-2 ./src_1/module_2 \
 ./src_1/module_1/module_1-1 ./src_2/conflicts/module_1)
 
 $(call anrem-assert-same-list, namespace1 dict keys, $(call anrem-dict-keys, src_1_ns_1), ns_1_module_1)
