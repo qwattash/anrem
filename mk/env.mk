@@ -21,7 +21,7 @@ ANREM_TOP := $(shell pwd)
 #
 ANREM_MODULES := $(strip \
 $(filter-out $(ANREM_COMPONENTS),\
-	$(foreach _MODULE, $(shell ls -Rl | grep -oP "\.[A-Za-z0-9\/_-]*(?=:$$)"),\
+	$(foreach _MODULE, $(shell ls -Rl | grep -oP "\.[A-Za-z0-9\/_-]*(?=:$$)" | awk '{ print length(), $$0 }' | sort -n | cut -d' ' -f2),\
 		$(if $(wildcard $(_MODULE)/*.mk), $(_MODULE))\
 	)\
 )\
