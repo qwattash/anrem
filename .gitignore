@@ -3,6 +3,9 @@
 *#*#
 *#*
 
+# temporary test files
+*.txt
+
 # .lnk and .deps directories
 *.lnk*
 *.deps*

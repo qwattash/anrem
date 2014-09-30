@@ -16,11 +16,11 @@ $(call anrem-test-load-helpers)
 # enable test logging
 $(call anrem-test-set-log, test.log)
 
-ns1_modules = ./src/module_1 ./src/module_2 ./src/module_1/module_1-1 ./src/module_1/module_1-2
-ns1_modules_with_flags = -I./src/module_1 -I./src/module_2 -I./src/module_1/module_1-1 -I./src/module_1/module_1-2
+ns1_modules = ./src ./src/module_1
+ns1_modules_with_flags = -I./src -I./src/module_1
 
-ns2_modules = ./src/namespace_1/ns_1_module_1
-ns2_modules_with_flags = -I./src/namespace_1/ns_1_module_1
+ns2_modules = ./src/namespace_1
+ns2_modules_with_flags = -I./src/namespace_1
 
 test_main:
 # tests for namespace 1

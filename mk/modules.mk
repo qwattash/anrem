@@ -3,13 +3,7 @@
 # modules handling functions
 # Here are defined the functions that are used to import modules and
 # define the module path variables
-# 
-
-
 #
-# remove dir calls and use anrem-path-dir instead
-#
-
 
 #
 # some constant that are not meant to be 
@@ -18,7 +12,6 @@
 ANREM_MOD_PROJECT_FILE := project
 ANREM_MOD_SCOPE_FILE := scope
 ANREM_MOD_PRIVATE_MK_DIR := mk
-
 
 #
 # Main function that processes the modules
@@ -551,7 +544,7 @@ endef
 # @param $1 namespace name
 # @param [$2] the compiler flag
 define anrem-ns-get-include-modules =
-$(addprefix $(strip $2), $(call anrem-dict-items, $1))
+$(addprefix $(strip $2), $(sort $(call anrem-path-dir, $(call anrem-dict-items, $1))))
 endef
 
 
