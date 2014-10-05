@@ -11,7 +11,11 @@
 #
 
 #global constants
-ANREM_COMPONENTS := mk
+# if anrem components have been set leave it like it is
+# otherwise set a default
+ifeq ($(ANREM_COMPONENTS),)
+	ANREM_COMPONENTS := mk
+endif
 
 #default target is all, needed because all has to be defined
 #after all inclusions and otherwise the first included target
