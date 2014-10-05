@@ -3,4 +3,4 @@
 # recursive make
 #
 
-$(call anrem-ns-ignore, $(wildcard ./tests/test_*))
+$(call anrem-ns-ignore, $(wildcard $(ANREM_BASE)/tests/test_*))

@@ -11,8 +11,6 @@ $(call anrem-test-load-helpers)
 # enable test logging
 $(call anrem-test-set-log, test.log)
 
-$(call anrem-warn, something)
-
 ## register the main test target
 $(call anrem-test): test-module-inclusion test-targets test-autodeps test-target-groups test-dict test-local
 

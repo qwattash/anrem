@@ -13,9 +13,11 @@
 #global constants
 # if anrem components have been set leave it like it is
 # otherwise set a default
-ifeq ($(ANREM_COMPONENTS),)
-	ANREM_COMPONENTS := mk
+ifeq ($(ANREM_BASE),)
+	ANREM_BASE := .
 endif
+
+ANREM_COMPONENTS := $(realpath $(ANREM_BASE)/mk)
 
 #default target is all, needed because all has to be defined
 #after all inclusions and otherwise the first included target
