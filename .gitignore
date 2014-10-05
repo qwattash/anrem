@@ -2,3 +2,13 @@
 *~
 *#*#
 *#*
+
+# temporary test files
+*.txt
+
+# .lnk and .deps directories
+*.lnk*
+*.deps*
+
+# object files
+*.o

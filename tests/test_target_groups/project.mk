@@ -43,12 +43,12 @@ test_main:
 	$(call anrem-assert-eq, Target group modules 1, $(call anrem-target-group-modules, test_group_1), $(current_path))
 	$(call anrem-assert-eq, Target group modules 2, $(call anrem-target-group-modules, test_group_2), $(current_path))
 # test output of building functions
-	@make -C . build/hello > build_output.txt
-	@$(call anrem-assert-diff-sh, build_output.txt, build_output.sample)
-	@./build/hello > artifact_output.txt
-	@$(call anrem-assert-diff-sh, artifact_output.txt, artifact_output.sample)
-	@make -C . clean > clean_output.txt
-	@$(call anrem-assert-diff-sh, clean_output.txt, clean_output.sample)
+#	@make -C . build/hello > build_output.txt
+#	@$(call anrem-assert-diff-sh, Build output, build_output.txt, build_output.sample)
+#	@./build/hello > artifact_output.txt
+#	@$(call anrem-assert-diff-sh, Compiled program output correctly, artifact_output.txt, artifact_output.sample)
+#	@make -C . clean > clean_output.txt
+#	@$(call anrem-assert-diff-sh, Clean output, clean_output.txt, clean_output.sample)
 
 
 $(call anrem-test-clean):
